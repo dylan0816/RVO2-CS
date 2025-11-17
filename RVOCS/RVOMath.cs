@@ -32,6 +32,7 @@
  */
 
 using System;
+using Unity.Mathematics;
 
 namespace RVO
 {
@@ -54,7 +55,7 @@ namespace RVO
          * computed.</param>
          * <returns>The length of the two-dimensional vector.</returns>
          */
-        public static float abs(Vector2 vector)
+        public static float abs(float2 vector)
         {
             return sqrt(absSq(vector));
         }
@@ -68,9 +69,9 @@ namespace RVO
          * <param name="vector">The two-dimensional vector whose squared length
          * is to be computed.</param>
          */
-        public static float absSq(Vector2 vector)
+        public static float absSq(float2 vector)
         {
-            return vector * vector;
+            return vector.x * vector.x + vector.y * vector.y;
         }
 
         /**
@@ -82,7 +83,7 @@ namespace RVO
          * <param name="vector">The two-dimensional vector whose normalization
          * is to be computed.</param>
          */
-        public static Vector2 normalize(Vector2 vector)
+        public static float2 normalize(float2 vector)
         {
             return vector / abs(vector);
         }
@@ -97,12 +98,12 @@ namespace RVO
          *
          * <param name="vector1">The top row of the two-dimensional square
          * matrix.</param>
-         * <param name="vector2">The bottom row of the two-dimensional square
+         * <param name="float2">The bottom row of the two-dimensional square
          * matrix.</param>
          */
-        internal static float det(Vector2 vector1, Vector2 vector2)
+        internal static float det(float2 vector1, float2 float2)
         {
-            return vector1.x_ * vector2.y_ - vector1.y_ * vector2.x_;
+            return vector1.x * float2.y - vector1.y * float2.x;
         }
 
         /**
@@ -113,14 +114,16 @@ namespace RVO
          * </returns>
          *
          * <param name="vector1">The first endpoint of the line segment.</param>
-         * <param name="vector2">The second endpoint of the line segment.
+         * <param name="float2">The second endpoint of the line segment.
          * </param>
          * <param name="vector3">The point to which the squared distance is to
          * be calculated.</param>
          */
-        internal static float distSqPointLineSegment(Vector2 vector1, Vector2 vector2, Vector2 vector3)
+        internal static float distSqPointLineSegment(float2 vector1, float2 vector2, float2 vector3)
         {
-            float r = ((vector3 - vector1) * (vector2 - vector1)) / absSq(vector2 - vector1);
+            float2 dir0 = vector3 - vector1;
+            float2 dir1 = vector2 - vector1;
+            float r = (dir0.x * dir1.x + dir0.y * dir1.y) / absSq(dir1);
 
             if (r < 0.0f)
             {
@@ -160,7 +163,7 @@ namespace RVO
          * <param name="c">The point to which the signed distance is to be
          * calculated.</param>
          */
-        internal static float leftOf(Vector2 a, Vector2 b, Vector2 c)
+        internal static float leftOf(float2 a, float2 b, float2 c)
         {
             return det(a - c, b - a);
         }
@@ -188,6 +191,11 @@ namespace RVO
         internal static float sqrt(float scalar)
         {
             return (float)Math.Sqrt(scalar);
+        }
+
+        internal static float Mul(float2 vector1, float2 vector2)
+        {
+            return vector1.x * vector2.x + vector1.y * vector2.y;
         }
     }
 }

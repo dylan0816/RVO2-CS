@@ -1,5 +1,5 @@
 /*
- * Vector2.cs
+ * float2.cs
  * RVO2 Library C#
  *
  * SPDX-FileCopyrightText: 2008 University of North Carolina at Chapel Hill
@@ -36,163 +36,163 @@ using System.Globalization;
 
 namespace RVO
 {
-    /**
-     * <summary>Defines a two-dimensional vector.</summary>
-     */
-    public struct Vector2
-    {
-        internal float x_;
-        internal float y_;
+    // /**
+    //  * <summary>Defines a two-dimensional vector.</summary>
+    //  */
+    // public struct float2
+    // {
+    //     internal float x_;
+    //     internal float y_;
 
-        /**
-         * <summary>Constructs and initializes a two-dimensional vector from the
-         * specified xy-coordinates.</summary>
-         *
-         * <param name="x">The x-coordinate of the two-dimensional vector.
-         * </param>
-         * <param name="y">The y-coordinate of the two-dimensional vector.
-         * </param>
-         */
-        public Vector2(float x, float y)
-        {
-            x_ = x;
-            y_ = y;
-        }
+    //     /**
+    //      * <summary>Constructs and initializes a two-dimensional vector from the
+    //      * specified xy-coordinates.</summary>
+    //      *
+    //      * <param name="x">The x-coordinate of the two-dimensional vector.
+    //      * </param>
+    //      * <param name="y">The y-coordinate of the two-dimensional vector.
+    //      * </param>
+    //      */
+    //     public float2(float x, float y)
+    //     {
+    //         x_ = x;
+    //         y_ = y;
+    //     }
 
-        /**
-         * <summary>Returns the string representation of this vector.</summary>
-         *
-         * <returns>The string representation of this vector.</returns>
-         */
-        public override string ToString()
-        {
-            return "(" + x_.ToString(new CultureInfo("").NumberFormat) + "," + y_.ToString(new CultureInfo("").NumberFormat) + ")";
-        }
+    //     /**
+    //      * <summary>Returns the string representation of this vector.</summary>
+    //      *
+    //      * <returns>The string representation of this vector.</returns>
+    //      */
+    //     public override string ToString()
+    //     {
+    //         return "(" + x_.ToString(new CultureInfo("").NumberFormat) + "," + y_.ToString(new CultureInfo("").NumberFormat) + ")";
+    //     }
 
-        /**
-         * <summary>Returns the x-coordinate of this two-dimensional vector.
-         * </summary>
-         *
-         * <returns>The x-coordinate of the two-dimensional vector.</returns>
-         */
-        public float x()
-        {
-            return x_;
-        }
+    //     /**
+    //      * <summary>Returns the x-coordinate of this two-dimensional vector.
+    //      * </summary>
+    //      *
+    //      * <returns>The x-coordinate of the two-dimensional vector.</returns>
+    //      */
+    //     public float x()
+    //     {
+    //         return x_;
+    //     }
 
-        /**
-         * <summary>Returns the y-coordinate of this two-dimensional vector.
-         * </summary>
-         *
-         * <returns>The y-coordinate of the two-dimensional vector.</returns>
-         */
-        public float y()
-        {
-            return y_;
-        }
+    //     /**
+    //      * <summary>Returns the y-coordinate of this two-dimensional vector.
+    //      * </summary>
+    //      *
+    //      * <returns>The y-coordinate of the two-dimensional vector.</returns>
+    //      */
+    //     public float y()
+    //     {
+    //         return y_;
+    //     }
 
-        /**
-         * <summary>Computes the dot product of the two specified
-         * two-dimensional vectors.</summary>
-         *
-         * <returns>The dot product of the two specified two-dimensional
-         * vectors.</returns>
-         *
-         * <param name="vector1">The first two-dimensional vector.</param>
-         * <param name="vector2">The second two-dimensional vector.</param>
-         */
-        public static float operator *(Vector2 vector1, Vector2 vector2)
-        {
-            return vector1.x_ * vector2.x_ + vector1.y_ * vector2.y_;
-        }
+    //     /**
+    //      * <summary>Computes the dot product of the two specified
+    //      * two-dimensional vectors.</summary>
+    //      *
+    //      * <returns>The dot product of the two specified two-dimensional
+    //      * vectors.</returns>
+    //      *
+    //      * <param name="vector1">The first two-dimensional vector.</param>
+    //      * <param name="float2">The second two-dimensional vector.</param>
+    //      */
+    //     public static float operator *(float2 vector1, float2 float2)
+    //     {
+    //         return vector1.x_ * float2.x_ + vector1.y_ * float2.y_;
+    //     }
 
-        /**
-         * <summary>Computes the scalar multiplication of the specified
-         * two-dimensional vector with the specified scalar value.</summary>
-         *
-         * <returns>The scalar multiplication of the specified two-dimensional
-         * vector with the specified scalar value.</returns>
-         *
-         * <param name="scalar">The scalar value.</param>
-         * <param name="vector">The two-dimensional vector.</param>
-         */
-        public static Vector2 operator *(float scalar, Vector2 vector)
-        {
-            return vector * scalar;
-        }
+    //     /**
+    //      * <summary>Computes the scalar multiplication of the specified
+    //      * two-dimensional vector with the specified scalar value.</summary>
+    //      *
+    //      * <returns>The scalar multiplication of the specified two-dimensional
+    //      * vector with the specified scalar value.</returns>
+    //      *
+    //      * <param name="scalar">The scalar value.</param>
+    //      * <param name="vector">The two-dimensional vector.</param>
+    //      */
+    //     public static float2 operator *(float scalar, float2 vector)
+    //     {
+    //         return vector * scalar;
+    //     }
 
-        /**
-         * <summary>Computes the scalar multiplication of the specified
-         * two-dimensional vector with the specified scalar value.</summary>
-         *
-         * <returns>The scalar multiplication of the specified two-dimensional
-         * vector with the specified scalar value.</returns>
-         *
-         * <param name="vector">The two-dimensional vector.</param>
-         * <param name="scalar">The scalar value.</param>
-         */
-        public static Vector2 operator *(Vector2 vector, float scalar)
-        {
-            return new Vector2(vector.x_ * scalar, vector.y_ * scalar);
-        }
+    //     /**
+    //      * <summary>Computes the scalar multiplication of the specified
+    //      * two-dimensional vector with the specified scalar value.</summary>
+    //      *
+    //      * <returns>The scalar multiplication of the specified two-dimensional
+    //      * vector with the specified scalar value.</returns>
+    //      *
+    //      * <param name="vector">The two-dimensional vector.</param>
+    //      * <param name="scalar">The scalar value.</param>
+    //      */
+    //     public static float2 operator *(float2 vector, float scalar)
+    //     {
+    //         return new float2(vector.x_ * scalar, vector.y_ * scalar);
+    //     }
 
-        /**
-         * <summary>Computes the scalar division of the specified
-         * two-dimensional vector with the specified scalar value.</summary>
-         *
-         * <returns>The scalar division of the specified two-dimensional vector
-         * with the specified scalar value.</returns>
-         *
-         * <param name="vector">The two-dimensional vector.</param>
-         * <param name="scalar">The scalar value.</param>
-         */
-        public static Vector2 operator /(Vector2 vector, float scalar)
-        {
-            return new Vector2(vector.x_ / scalar, vector.y_ / scalar);
-        }
+    //     /**
+    //      * <summary>Computes the scalar division of the specified
+    //      * two-dimensional vector with the specified scalar value.</summary>
+    //      *
+    //      * <returns>The scalar division of the specified two-dimensional vector
+    //      * with the specified scalar value.</returns>
+    //      *
+    //      * <param name="vector">The two-dimensional vector.</param>
+    //      * <param name="scalar">The scalar value.</param>
+    //      */
+    //     public static float2 operator /(float2 vector, float scalar)
+    //     {
+    //         return new float2(vector.x_ / scalar, vector.y_ / scalar);
+    //     }
 
-        /**
-         * <summary>Computes the vector sum of the two specified two-dimensional
-         * vectors.</summary>
-         *
-         * <returns>The vector sum of the two specified two-dimensional vectors.
-         * </returns>
-         *
-         * <param name="vector1">The first two-dimensional vector.</param>
-         * <param name="vector2">The second two-dimensional vector.</param>
-         */
-        public static Vector2 operator +(Vector2 vector1, Vector2 vector2)
-        {
-            return new Vector2(vector1.x_ + vector2.x_, vector1.y_ + vector2.y_);
-        }
+    //     /**
+    //      * <summary>Computes the vector sum of the two specified two-dimensional
+    //      * vectors.</summary>
+    //      *
+    //      * <returns>The vector sum of the two specified two-dimensional vectors.
+    //      * </returns>
+    //      *
+    //      * <param name="vector1">The first two-dimensional vector.</param>
+    //      * <param name="float2">The second two-dimensional vector.</param>
+    //      */
+    //     public static float2 operator +(float2 vector1, float2 float2)
+    //     {
+    //         return new float2(vector1.x_ + float2.x_, vector1.y_ + float2.y_);
+    //     }
 
-        /**
-         * <summary>Computes the vector difference of the two specified
-         * two-dimensional vectors</summary>
-         *
-         * <returns>The vector difference of the two specified two-dimensional
-         * vectors.</returns>
-         *
-         * <param name="vector1">The first two-dimensional vector.</param>
-         * <param name="vector2">The second two-dimensional vector.</param>
-         */
-        public static Vector2 operator -(Vector2 vector1, Vector2 vector2)
-        {
-            return new Vector2(vector1.x_ - vector2.x_, vector1.y_ - vector2.y_);
-        }
+    //     /**
+    //      * <summary>Computes the vector difference of the two specified
+    //      * two-dimensional vectors</summary>
+    //      *
+    //      * <returns>The vector difference of the two specified two-dimensional
+    //      * vectors.</returns>
+    //      *
+    //      * <param name="vector1">The first two-dimensional vector.</param>
+    //      * <param name="float2">The second two-dimensional vector.</param>
+    //      */
+    //     public static float2 operator -(float2 vector1, float2 float2)
+    //     {
+    //         return new float2(vector1.x_ - float2.x_, vector1.y_ - float2.y_);
+    //     }
 
-        /**
-         * <summary>Computes the negation of the specified two-dimensional
-         * vector.</summary>
-         *
-         * <returns>The negation of the specified two-dimensional vector.
-         * </returns>
-         *
-         * <param name="vector">The two-dimensional vector.</param>
-         */
-        public static Vector2 operator -(Vector2 vector)
-        {
-            return new Vector2(-vector.x_, -vector.y_);
-        }
-    }
+    //     /**
+    //      * <summary>Computes the negation of the specified two-dimensional
+    //      * vector.</summary>
+    //      *
+    //      * <returns>The negation of the specified two-dimensional vector.
+    //      * </returns>
+    //      *
+    //      * <param name="vector">The two-dimensional vector.</param>
+    //      */
+    //     public static float2 operator -(float2 vector)
+    //     {
+    //         return new float2(-vector.x_, -vector.y_);
+    //     }
+    // }
 }

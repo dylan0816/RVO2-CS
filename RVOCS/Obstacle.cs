@@ -30,6 +30,7 @@
  *
  * <http://gamma.cs.unc.edu/RVO2/>
  */
+using Unity.Mathematics;
 
 namespace RVO
 {
@@ -41,8 +42,8 @@ namespace RVO
 
         internal Obstacle next_;
         internal Obstacle previous_;
-        internal Vector2 direction_;
-        internal Vector2 point_;
+        internal float2 direction_;
+        internal float2 point_;
         internal int id_;
         internal bool convex_;
     }

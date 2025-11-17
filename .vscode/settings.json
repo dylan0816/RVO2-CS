@@ -1,8 +1,0 @@
-{
-  "cmake.buildDirectory": "${workspaceFolder}/_build",
-  "cmake.preferredGenerators": [
-    "Ninja Multi-Config",
-    "Ninja"
-  ],
-  "omnisharp.useModernNet": true
-}

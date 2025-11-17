@@ -30,6 +30,7 @@
  *
  * <http://gamma.cs.unc.edu/RVO2/>
  */
+ using Unity.Mathematics;
 
 namespace RVO
 {
@@ -38,7 +39,7 @@ namespace RVO
      */
     public struct Line
     {
-        public Vector2 direction;
-        public Vector2 point;
+        public float2 direction;
+        public float2 point;
     }
 }

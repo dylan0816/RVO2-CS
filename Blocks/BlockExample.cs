@@ -44,27 +44,28 @@
 using System;
 using System.Collections.Generic;
 using Unity.Mathematics;
-using Random = Unity.Mathematics.Random;
+using UnityEngine;
+using Random = System.Random;
 
 namespace RVO
 {
-    class Blocks
+    public class BlockExample : MonoBehaviour
     {
         /* Store the goals of the agents. */
-        readonly IList<float2> goals;
+        public IList<float2> goals;
 
         /** Random number generator. */
-        readonly Random random;
+        public Random random;
 
-        Blocks()
+        private List<int> obstacles = new List<int>(36);
+
+        void Start()
         {
             goals = new List<float2>();
-
-#if RVOCS_SEED_RANDOM_NUMBER_GENERATOR
-            random = new Random();
-#else
             random = new Random(0);
-#endif
+
+
+            setupScenario();
         }
 
         void setupScenario()
@@ -111,7 +112,7 @@ namespace RVO
                 new float2(-40.0f, 10.0f),
                 new float2(-10.0f, 10.0f)
             };
-            Simulator.Instance.addObstacle(obstacle1);
+            obstacles.Add(Simulator.Instance.addObstacle(obstacle1));
 
             IList<float2> obstacle2 = new List<float2>
             {
@@ -120,7 +121,7 @@ namespace RVO
                 new float2(40.0f, 10.0f),
                 new float2(40.0f, 40.0f)
             };
-            Simulator.Instance.addObstacle(obstacle2);
+            obstacles.Add(Simulator.Instance.addObstacle(obstacle2));
 
             IList<float2> obstacle3 = new List<float2>
             {
@@ -129,7 +130,7 @@ namespace RVO
                 new float2(40.0f, -10.0f),
                 new float2(10.0f, -10.0f)
             };
-            Simulator.Instance.addObstacle(obstacle3);
+            obstacles.Add(Simulator.Instance.addObstacle(obstacle3));
 
             IList<float2> obstacle4 = new List<float2>
             {
@@ -138,7 +139,7 @@ namespace RVO
                 new float2(-40.0f, -10.0f),
                 new float2(-40.0f, -40.0f)
             };
-            Simulator.Instance.addObstacle(obstacle4);
+            obstacles.Add(Simulator.Instance.addObstacle(obstacle4));
 
             /*
              * Process the obstacles so that they are accounted for in the
@@ -203,23 +204,54 @@ namespace RVO
             return true;
         }
 
-        public static void Main(string[] args)
+
+        void Update()
         {
-            Blocks blocks = new();
+            if (reachedGoal()) return;
 
-            /* Set up the scenario. */
-            blocks.setupScenario();
-
-            /* Perform (and manipulate) the simulation. */
-            do
-            {
 #if RVOCS_OUTPUT_TIME_AND_POSITIONS
-                blocks.updateVisualization();
+            // updateVisualization();
 #endif
-                blocks.setPreferredVelocities();
-                Simulator.Instance.doStep();
+            setPreferredVelocities();
+            Simulator.Instance.doStep();
+        }
+
+        private void OnDrawGizmos()
+        {
+            Simulator simulator = Simulator.Instance;
+
+            if (simulator == null)
+            {
+                return;
             }
-            while (!blocks.reachedGoal());
+
+            for (int i = obstacles.Count - 1; i >= 0; i--)
+            {
+                int obstacleId = obstacles[i];
+                int current = obstacleId;
+                var first = simulator.getObstacleVertex(obstacles[i]);
+
+                while (true)
+                {
+                    int next = simulator.getNextObstacleVertexNo(current);
+                    float2 p0 = simulator.getObstacleVertex(current);
+                    float2 p1 = simulator.getObstacleVertex(next);
+
+                    Gizmos.DrawLine((Vector2)p0, (Vector2)p1);
+
+                    if (next == obstacleId)
+                    {
+                        break;
+                    }
+
+                    current = next;
+                }
+            }
+
+            for (int i = 0; i < simulator.getNumAgents(); ++i)
+            {
+                Gizmos.DrawSphere((Vector2)simulator.getAgentPosition(i), 2);
+            }
         }
     }
 }
