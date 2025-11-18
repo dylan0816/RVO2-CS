@@ -217,9 +217,9 @@ namespace RVO
          * computed.</param>
          * <param name="rangeSq">The squared range around the agent.</param>
          */
-        internal void computeAgentNeighbors(int agentNo, IList<Agent> agents, ref float rangeSq, ref NativeList<KeyValuePair<float, int>> agentNeighbors)
+        internal void computeAgentNeighbors(ref Agent agent, IList<Agent> agents, ref float rangeSq, ref NativeList<KeyValuePair<float, int>> agentNeighbors)
         {
-            queryAgentTreeRecursive(agentNo, agents, ref rangeSq, 0, ref agentNeighbors);
+            queryAgentTreeRecursive(ref agent, agents, ref rangeSq, 0, ref agentNeighbors);
         }
 
         /**
@@ -230,9 +230,9 @@ namespace RVO
          * computed.</param>
          * <param name="rangeSq">The squared range around the agent.</param>
          */
-        internal void computeObstacleNeighbors(int agentNo, IList<Agent> agents, float rangeSq, in NativeList<Obstacle> obstacles, ref NativeList<KeyValuePair<float, int>> obstacleNeighbors)
+        internal void computeObstacleNeighbors(ref Agent agent, IList<Agent> agents, float rangeSq, in NativeList<Obstacle> obstacles, ref NativeList<KeyValuePair<float, int>> obstacleNeighbors)
         {
-            queryObstacleTreeRecursive(agentNo, agents, rangeSq, obstacleTreeNodeIdx_, obstacles, ref obstacleNeighbors);
+            queryObstacleTreeRecursive(ref agent, agents, rangeSq, obstacleTreeNodeIdx_, obstacles, ref obstacleNeighbors);
         }
 
         /**
@@ -498,9 +498,8 @@ namespace RVO
          * <param name="rangeSq">The squared range around the agent.</param>
          * <param name="node">The current agent k-D tree node index.</param>
          */
-        private void queryAgentTreeRecursive(int agentNo, IList<Agent> agents, ref float rangeSq, int node, ref NativeList<KeyValuePair<float, int>> agentNeighbors)
+        private void queryAgentTreeRecursive(ref Agent agent, IList<Agent> agents, ref float rangeSq, int node, ref NativeList<KeyValuePair<float, int>> agentNeighbors)
         {
-            Agent agent = agents[agentNo];
             if (agentTree_[node].end_ - agentTree_[node].begin_ <= MAX_LEAF_SIZE)
             {
                 for (int i = agentTree_[node].begin_; i < agentTree_[node].end_; ++i)
@@ -524,11 +523,11 @@ namespace RVO
                 {
                     if (distSqLeft < rangeSq)
                     {
-                        queryAgentTreeRecursive(agentNo, agents, ref rangeSq, agentTree_[node].left_, ref agentNeighbors);
+                        queryAgentTreeRecursive(ref agent, agents, ref rangeSq, agentTree_[node].left_, ref agentNeighbors);
 
                         if (distSqRight < rangeSq)
                         {
-                            queryAgentTreeRecursive(agentNo, agents, ref rangeSq, agentTree_[node].right_, ref agentNeighbors);
+                            queryAgentTreeRecursive(ref agent, agents, ref rangeSq, agentTree_[node].right_, ref agentNeighbors);
                         }
                     }
                 }
@@ -536,11 +535,11 @@ namespace RVO
                 {
                     if (distSqRight < rangeSq)
                     {
-                        queryAgentTreeRecursive(agentNo, agents, ref rangeSq, agentTree_[node].right_, ref agentNeighbors);
+                        queryAgentTreeRecursive(ref agent, agents, ref rangeSq, agentTree_[node].right_, ref agentNeighbors);
 
                         if (distSqLeft < rangeSq)
                         {
-                            queryAgentTreeRecursive(agentNo, agents, ref rangeSq, agentTree_[node].left_, ref agentNeighbors);
+                            queryAgentTreeRecursive(ref agent, agents, ref rangeSq, agentTree_[node].left_, ref agentNeighbors);
                         }
                     }
                 }
@@ -557,10 +556,9 @@ namespace RVO
          * <param name="rangeSq">The squared range around the agent.</param>
          * <param name="node">The current obstacle k-D node.</param>
          */
-        private void queryObstacleTreeRecursive(int agentNo, in IList<Agent> agents, float rangeSq, int nodeIndex, in NativeList<Obstacle> obstacles, ref NativeList<KeyValuePair<float, int>> obstacleNeighbors)
+        private void queryObstacleTreeRecursive(ref Agent agent, in IList<Agent> agents, float rangeSq, int nodeIndex, in NativeList<Obstacle> obstacles, ref NativeList<KeyValuePair<float, int>> obstacleNeighbors)
         {
             if (nodeIndex < 0) return;
-            Agent agent = agents[agentNo];
             ObstacleTreeNode node = obstacleTreeNodes_[nodeIndex];
 
             Obstacle obstacle1 = obstacles[node.obstacleNo_];
@@ -568,7 +566,7 @@ namespace RVO
 
             float agentLeftOfLine = RVOMath.leftOf(obstacle1.point_, obstacle2.point_, agent.position_);
 
-            queryObstacleTreeRecursive(agentNo, in agents, rangeSq, agentLeftOfLine >= 0.0f ? node.left_ : node.right_, obstacles, ref obstacleNeighbors);
+            queryObstacleTreeRecursive(ref agent, in agents, rangeSq, agentLeftOfLine >= 0.0f ? node.left_ : node.right_, obstacles, ref obstacleNeighbors);
 
             float distSqLine = RVOMath.sqr(agentLeftOfLine) / RVOMath.absSq(obstacle2.point_ - obstacle1.point_);
 
@@ -580,11 +578,11 @@ namespace RVO
                      * Try obstacle at this node only if agent is on right side of
                      * obstacle (and can see obstacle).
                      */
-                    agent.insertObstacleNeighbor(node.obstacleNo_, obstacles, rangeSq, ref obstacleNeighbors);
+                    Agent.insertObstacleNeighbor(agent.position_, node.obstacleNo_, obstacles, rangeSq, ref obstacleNeighbors);
                 }
 
                 /* Try other side of line. */
-                queryObstacleTreeRecursive(agentNo, in agents, rangeSq, agentLeftOfLine >= 0.0f ? node.right_ : node.left_, obstacles, ref obstacleNeighbors);
+                queryObstacleTreeRecursive(ref agent, in agents, rangeSq, agentLeftOfLine >= 0.0f ? node.right_ : node.left_, obstacles, ref obstacleNeighbors);
             }
         }
 

@@ -92,10 +92,10 @@ namespace RVO
              */
             internal void update(object _)
             {
-                for (int agentNo = start_; agentNo < end_; ++agentNo)
-                {
-                    Simulator.Instance.agents_[agentNo].update();
-                }
+                // for (int agentNo = start_; agentNo < end_; ++agentNo)
+                // {
+                //     Simulator.Instance.agents_[agentNo].update();
+                // }
 
                 doneEvent_.Set();
             }
@@ -136,17 +136,19 @@ namespace RVO
          */
         public int addAgent(float2 position)
         {
-            Agent agent = new();
+            Agent agent = new Agent();
             agent.id_ = agents_.Count;
+            agent.position_ = position;
+
             agent.maxNeighbors_ = defaultAgent_.maxNeighbors_;
             agent.maxSpeed_ = defaultAgent_.maxSpeed_;
             agent.neighborDist_ = defaultAgent_.neighborDist_;
-            agent.position_ = position;
             agent.radius_ = defaultAgent_.radius_;
             agent.timeHorizon_ = defaultAgent_.timeHorizon_;
             agent.timeHorizonObst_ = defaultAgent_.timeHorizonObst_;
             agent.velocity_ = defaultAgent_.velocity_;
             agents_.Add(agent);
+            UnityEngine.Debug.Log($"Agent {agent.id_} {agent.velocity_}added.");
 
             return agent.id_;
         }
@@ -187,7 +189,7 @@ namespace RVO
          */
         public int addAgent(float2 position, float neighborDist, int maxNeighbors, float timeHorizon, float timeHorizonObst, float radius, float maxSpeed, float2 velocity)
         {
-            Agent agent = new();
+            Agent agent = new Agent();
             agent.id_ = agents_.Count;
             agent.maxNeighbors_ = maxNeighbors;
             agent.maxSpeed_ = maxSpeed;
@@ -271,7 +273,7 @@ namespace RVO
          */
         public void Clear()
         {
-            defaultAgent_ = null;
+            defaultAgent_ = new Agent() { id_ = -1 };
             agents_.Clear();
             kdTree_.Clear();
 
@@ -344,23 +346,30 @@ namespace RVO
 
             kdTree_.buildAgentTree();
 
+            NativeList<KeyValuePair<float, int>> obstacleNeighbors = new NativeList<KeyValuePair<float, int>>(16, Allocator.Temp);
+            NativeList<KeyValuePair<float, int>> agentNeighbors = new NativeList<KeyValuePair<float, int>>(16, Allocator.Temp);
             for (int agentNo = 0; agentNo < agents_.Count; ++agentNo)
             {
-                NativeList<KeyValuePair<float, int>> obstacleNeighbors = new NativeList<KeyValuePair<float, int>>(16, Allocator.Temp);
-                NativeList<KeyValuePair<float, int>> agentNeighbors = new NativeList<KeyValuePair<float, int>>(16, Allocator.Temp);
-                agents_[agentNo].computeNeighbors(agents_, ref agentNeighbors, ref obstacleNeighbors);
-                agents_[agentNo].computeNewVelocity(agents_, obstacles_, in obstacleNeighbors, in agentNeighbors);
-                obstacleNeighbors.Dispose();
-                agentNeighbors.Dispose();
+                obstacleNeighbors.Clear();
+                agentNeighbors.Clear();
+
+                Agent agent = agents_[agentNo];
+                Agent.computeNeighbors(ref agent, agents_, ref agentNeighbors, ref obstacleNeighbors);
+                Agent.computeNewVelocity(ref agent, agents_, obstacles_, in obstacleNeighbors, in agentNeighbors);
+                agents_[agentNo] = agent;
             }
+            obstacleNeighbors.Dispose();
+            agentNeighbors.Dispose();
 
             for (int agentNo = 0; agentNo < agents_.Count; ++agentNo)
             {
-                agents_[agentNo].update();
+                Agent agent = agents_[agentNo];
+                agent.velocity_ = agent.newVelocity_;
+                agent.position_ = agent.position_ + agent.velocity_ * timeStep_;
+                agents_[agentNo] = agent;
             }
 
             globalTime_ += timeStep_;
-
             return globalTime_;
         }
 
@@ -735,7 +744,6 @@ namespace RVO
          */
         public void setAgentDefaults(float neighborDist, int maxNeighbors, float timeHorizon, float timeHorizonObst, float radius, float maxSpeed, float2 velocity)
         {
-            UnityEngine.Debug.Log($"setAgentDefaults: {defaultAgent_}");
             defaultAgent_ = new Agent();
             defaultAgent_.id_ = -1;
 
