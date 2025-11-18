@@ -629,7 +629,7 @@ namespace RVO
          */
         public void processObstacles()
         {
-            kdTree_.buildObstacleTree();
+            kdTree_.buildObstacleTree(this);
         }
 
         /**
@@ -648,7 +648,7 @@ namespace RVO
          */
         public bool queryVisibility(float2 point1, float2 point2, float radius)
         {
-            return kdTree_.queryVisibility(point1, point2, radius);
+            return kdTree_.queryVisibility(point1, point2, radius, obstacles_);
         }
 
         /**

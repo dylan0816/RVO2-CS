@@ -65,14 +65,16 @@ namespace RVO
         {
             obstacleNeighbors_.Clear();
             float rangeSq = RVOMath.sqr(timeHorizonObst_ * maxSpeed_ + radius_);
-            Simulator.Instance.kdTree_.computeObstacleNeighbors(this, rangeSq);
+
+            Simulator simulator = Simulator.Instance;
+            simulator.kdTree_.computeObstacleNeighbors(this, rangeSq, simulator.obstacles_);
 
             agentNeighbors_.Clear();
 
             if (maxNeighbors_ > 0)
             {
                 rangeSq = RVOMath.sqr(neighborDist_);
-                Simulator.Instance.kdTree_.computeAgentNeighbors(this, ref rangeSq);
+                simulator.kdTree_.computeAgentNeighbors(this, simulator.agents_, ref rangeSq);
             }
         }
 
