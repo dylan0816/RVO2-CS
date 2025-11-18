@@ -217,9 +217,9 @@ namespace RVO
          * computed.</param>
          * <param name="rangeSq">The squared range around the agent.</param>
          */
-        internal void computeAgentNeighbors(ref Agent agent, IList<Agent> agents, ref float rangeSq, ref NativeList<KeyValuePair<float, int>> agentNeighbors)
+        internal void computeAgentNeighbors(ref Agent agent, ref float rangeSq, ref NativeList<KeyValuePair<float, int>> agentNeighbors)
         {
-            queryAgentTreeRecursive(ref agent, agents, ref rangeSq, 0, ref agentNeighbors);
+            queryAgentTreeRecursive(ref agent, ref rangeSq, 0, ref agentNeighbors);
         }
 
         /**
@@ -230,9 +230,9 @@ namespace RVO
          * computed.</param>
          * <param name="rangeSq">The squared range around the agent.</param>
          */
-        internal void computeObstacleNeighbors(ref Agent agent, IList<Agent> agents, float rangeSq, in NativeList<Obstacle> obstacles, ref NativeList<KeyValuePair<float, int>> obstacleNeighbors)
+        internal void computeObstacleNeighbors(ref Agent agent, float rangeSq, in NativeList<Obstacle> obstacles, ref NativeList<KeyValuePair<float, int>> obstacleNeighbors)
         {
-            queryObstacleTreeRecursive(ref agent, agents, rangeSq, obstacleTreeNodeIdx_, obstacles, ref obstacleNeighbors);
+            queryObstacleTreeRecursive(ref agent, rangeSq, obstacleTreeNodeIdx_, obstacles, ref obstacleNeighbors);
         }
 
         /**
@@ -498,7 +498,7 @@ namespace RVO
          * <param name="rangeSq">The squared range around the agent.</param>
          * <param name="node">The current agent k-D tree node index.</param>
          */
-        private void queryAgentTreeRecursive(ref Agent agent, IList<Agent> agents, ref float rangeSq, int node, ref NativeList<KeyValuePair<float, int>> agentNeighbors)
+        private void queryAgentTreeRecursive(ref Agent agent, ref float rangeSq, int node, ref NativeList<KeyValuePair<float, int>> agentNeighbors)
         {
             if (agentTree_[node].end_ - agentTree_[node].begin_ <= MAX_LEAF_SIZE)
             {
@@ -523,11 +523,11 @@ namespace RVO
                 {
                     if (distSqLeft < rangeSq)
                     {
-                        queryAgentTreeRecursive(ref agent, agents, ref rangeSq, agentTree_[node].left_, ref agentNeighbors);
+                        queryAgentTreeRecursive(ref agent, ref rangeSq, agentTree_[node].left_, ref agentNeighbors);
 
                         if (distSqRight < rangeSq)
                         {
-                            queryAgentTreeRecursive(ref agent, agents, ref rangeSq, agentTree_[node].right_, ref agentNeighbors);
+                            queryAgentTreeRecursive(ref agent, ref rangeSq, agentTree_[node].right_, ref agentNeighbors);
                         }
                     }
                 }
@@ -535,11 +535,11 @@ namespace RVO
                 {
                     if (distSqRight < rangeSq)
                     {
-                        queryAgentTreeRecursive(ref agent, agents, ref rangeSq, agentTree_[node].right_, ref agentNeighbors);
+                        queryAgentTreeRecursive(ref agent, ref rangeSq, agentTree_[node].right_, ref agentNeighbors);
 
                         if (distSqLeft < rangeSq)
                         {
-                            queryAgentTreeRecursive(ref agent, agents, ref rangeSq, agentTree_[node].left_, ref agentNeighbors);
+                            queryAgentTreeRecursive(ref agent, ref rangeSq, agentTree_[node].left_, ref agentNeighbors);
                         }
                     }
                 }
@@ -556,7 +556,7 @@ namespace RVO
          * <param name="rangeSq">The squared range around the agent.</param>
          * <param name="node">The current obstacle k-D node.</param>
          */
-        private void queryObstacleTreeRecursive(ref Agent agent, in IList<Agent> agents, float rangeSq, int nodeIndex, in NativeList<Obstacle> obstacles, ref NativeList<KeyValuePair<float, int>> obstacleNeighbors)
+        private void queryObstacleTreeRecursive(ref Agent agent, float rangeSq, int nodeIndex, in NativeList<Obstacle> obstacles, ref NativeList<KeyValuePair<float, int>> obstacleNeighbors)
         {
             if (nodeIndex < 0) return;
             ObstacleTreeNode node = obstacleTreeNodes_[nodeIndex];
@@ -566,7 +566,7 @@ namespace RVO
 
             float agentLeftOfLine = RVOMath.leftOf(obstacle1.point_, obstacle2.point_, agent.position_);
 
-            queryObstacleTreeRecursive(ref agent, in agents, rangeSq, agentLeftOfLine >= 0.0f ? node.left_ : node.right_, obstacles, ref obstacleNeighbors);
+            queryObstacleTreeRecursive(ref agent, rangeSq, agentLeftOfLine >= 0.0f ? node.left_ : node.right_, obstacles, ref obstacleNeighbors);
 
             float distSqLine = RVOMath.sqr(agentLeftOfLine) / RVOMath.absSq(obstacle2.point_ - obstacle1.point_);
 
@@ -582,7 +582,7 @@ namespace RVO
                 }
 
                 /* Try other side of line. */
-                queryObstacleTreeRecursive(ref agent, in agents, rangeSq, agentLeftOfLine >= 0.0f ? node.right_ : node.left_, obstacles, ref obstacleNeighbors);
+                queryObstacleTreeRecursive(ref agent, rangeSq, agentLeftOfLine >= 0.0f ? node.right_ : node.left_, obstacles, ref obstacleNeighbors);
             }
         }
 

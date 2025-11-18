@@ -354,7 +354,7 @@ namespace RVO
                 agentNeighbors.Clear();
 
                 Agent agent = agents_[agentNo];
-                Agent.computeNeighbors(ref agent, agents_, ref agentNeighbors, ref obstacleNeighbors);
+                Agent.computeNeighbors(ref agent, ref agentNeighbors, ref obstacleNeighbors);
                 Agent.computeNewVelocity(ref agent, agents_, obstacles_, in obstacleNeighbors, in agentNeighbors);
                 agents_[agentNo] = agent;
             }

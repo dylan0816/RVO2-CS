@@ -65,16 +65,16 @@ namespace RVO
         /**
          * <summary>Computes the neighbors of this agent.</summary>
          */
-        internal static void computeNeighbors(ref Agent agent, in IList<Agent> agents, ref NativeList<KeyValuePair<float, int>> agentNeighbors, ref NativeList<KeyValuePair<float, int>> obstacleNeighbors)
+        internal static void computeNeighbors(ref Agent agent, ref NativeList<KeyValuePair<float, int>> agentNeighbors, ref NativeList<KeyValuePair<float, int>> obstacleNeighbors)
         {
             float rangeSq = RVOMath.sqr(agent.timeHorizonObst_ * agent.maxSpeed_ + agent.radius_);
             Simulator simulator = Simulator.Instance;
-            simulator.kdTree_.computeObstacleNeighbors(ref agent, agents, rangeSq, in simulator.obstacles_, ref obstacleNeighbors);
+            simulator.kdTree_.computeObstacleNeighbors(ref agent, rangeSq, in simulator.obstacles_, ref obstacleNeighbors);
 
             if (agent.maxNeighbors_ > 0)
             {
                 rangeSq = RVOMath.sqr(agent.neighborDist_);
-                simulator.kdTree_.computeAgentNeighbors(ref agent, agents, ref rangeSq, ref agentNeighbors);
+                simulator.kdTree_.computeAgentNeighbors(ref agent, ref rangeSq, ref agentNeighbors);
             }
         }
 
