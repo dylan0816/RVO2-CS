@@ -253,5 +253,11 @@ namespace RVO
                 Gizmos.DrawSphere((Vector2)simulator.getAgentPosition(i), 2);
             }
         }
+
+        private void OnDestroy()
+        {
+            Simulator.Instance.Clear();
+            Simulator.Instance.Dispose();
+        }
     }
 }

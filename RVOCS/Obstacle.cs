@@ -30,6 +30,7 @@
  *
  * <http://gamma.cs.unc.edu/RVO2/>
  */
+using System;
 using Unity.Mathematics;
 
 namespace RVO
@@ -37,14 +38,31 @@ namespace RVO
     /**
      * <summary>Defines static obstacles in the simulation.</summary>
      */
-    internal class Obstacle
+    internal struct Obstacle : IEquatable<Obstacle>
     {
-
-        internal Obstacle next_;
-        internal Obstacle previous_;
+        internal int next_;
+        internal int previous_;
         internal float2 direction_;
         internal float2 point_;
         internal int id_;
         internal bool convex_;
+
+        public static bool operator ==(Obstacle a, Obstacle b) => a.id_ == b.id_;
+        public static bool operator !=(Obstacle a, Obstacle b) => a.id_ == b.id_;
+
+        public bool Equals(Obstacle other)
+        {
+            return id_ == other.id_;
+        }
+
+        override public int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+
+        public override bool Equals(object obj)
+        {
+            return base.Equals(obj);
+        }
     }
 }
