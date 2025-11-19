@@ -190,7 +190,7 @@ namespace RVO
          */
         internal static float sqrt(float scalar)
         {
-            return (float)Math.Sqrt(scalar);
+            return (float)math.sqrt(scalar);
         }
 
         internal static float Mul(float2 vector1, float2 vector2)

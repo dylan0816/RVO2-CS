@@ -83,9 +83,9 @@ namespace RVO
              * Add agents, specifying their start position, and store their
              * goals on the opposite side of the environment.
              */
-            for (int i = 0; i < 5; ++i)
+            for (int i = 0; i < 10; ++i)
             {
-                for (int j = 0; j < 5; ++j)
+                for (int j = 0; j < 10; ++j)
                 {
                     Simulator.Instance.addAgent(new float2(55.0f + i * 10.0f, 55.0f + j * 10.0f));
                     goals.Add(new float2(-75.0f, -75.0f));

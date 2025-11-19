@@ -344,7 +344,12 @@ namespace RVO
 
             // WaitHandle.WaitAll(doneEvents_);
 
-            kdTree_.buildAgentTree();
+            // 构建 树
+            NativeArray<KdTree.AgentTreeNode> agentTreeReadOnly_ = new NativeArray<KdTree.AgentTreeNode>(2 * agents_.Count, Allocator.Temp);
+            NativeArray<Agent> agentsReadOnly = new NativeArray<Agent>(agents_.Count, Allocator.Temp);
+            for (int i = 0; i < agentsReadOnly.Length; ++i)
+                agentsReadOnly[i] = agents_[i];
+            kdTree_.buildAgentTreeRecursive(ref agentTreeReadOnly_, ref agentsReadOnly, 0, agentsReadOnly.Length, 0);
 
             NativeList<KeyValuePair<float, int>> obstacleNeighbors = new NativeList<KeyValuePair<float, int>>(16, Allocator.Temp);
             NativeList<KeyValuePair<float, int>> agentNeighbors = new NativeList<KeyValuePair<float, int>>(16, Allocator.Temp);
@@ -354,10 +359,21 @@ namespace RVO
                 agentNeighbors.Clear();
 
                 Agent agent = agents_[agentNo];
-                Agent.computeNeighbors(ref agent, ref agentNeighbors, ref obstacleNeighbors);
-                Agent.computeNewVelocity(ref agent, agents_, obstacles_, in obstacleNeighbors, in agentNeighbors);
+
+                float rangeSq = RVOMath.sqr(agent.timeHorizonObst_ * agent.maxSpeed_ + agent.radius_);
+                kdTree_.computeObstacleNeighbors(ref agent, rangeSq, in obstacles_, ref obstacleNeighbors);
+                if (agent.maxNeighbors_ > 0)
+                {
+                    rangeSq = RVOMath.sqr(agent.neighborDist_);
+                    kdTree_.computeAgentNeighbors(in agent, in agentTreeReadOnly_, in agentsReadOnly, ref rangeSq, ref agentNeighbors);
+                }
+
+                ROCA.computeNewVelocity(ref agent, agents_, obstacles_, in obstacleNeighbors, in agentNeighbors);
                 agents_[agentNo] = agent;
             }
+
+            agentsReadOnly.Dispose();
+            agentTreeReadOnly_.Dispose();
             obstacleNeighbors.Dispose();
             agentNeighbors.Dispose();
 
