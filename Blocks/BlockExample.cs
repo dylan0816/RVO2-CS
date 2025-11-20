@@ -65,8 +65,6 @@ namespace RVO
         {
             goals = new List<float2>();
             random = new Random(0);
-
-
             setupScenario();
         }
 

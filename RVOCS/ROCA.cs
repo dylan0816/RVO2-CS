@@ -1,4 +1,5 @@
-// #define RVOCS_PAIR_COMPARER_BY_ID
+// #define OPEN_PROFILER
+#define OPTIMIZED_LINEAR
 
 namespace RVO
 {
@@ -29,6 +30,26 @@ namespace RVO
 
     public static class ROCA
     {
+#if OPTIMIZED_LINEAR
+        static NativeList<Line> orcaLines;
+        static NativeList<Line> projLines;
+
+        public static void Allocate(int capacity = 64)
+        {
+            orcaLines = new NativeList<Line>(capacity, Allocator.Temp);
+            projLines = new NativeList<Line>(capacity >> 1, Allocator.Temp);
+        }
+
+        public static void Deallocate()
+        {
+
+        }
+#else
+        public static void Allocate(int capacity = 64) { }
+        public static void Deallocate() { }
+#endif
+
+
         /**
          * <summary>Computes the new velocity for the specified agent.</summary>
          *
@@ -44,14 +65,21 @@ namespace RVO
          */
         public static void computeNewVelocity(ref Agent agent, in NativeList<Agent> agents, in NativeList<Obstacle> obstacles, in NativeList<Pair> obstacleNeighbors, in NativeList<Pair> agentNeighbors)
         {
-            var orcaLines = new NativeList<Line>(16, Allocator.Temp);
+#if OPTIMIZED_LINEAR
+            orcaLines.Clear();
+#else
+            NativeList<Line> orcaLines = new NativeList<Line>(64, Allocator.Temp);
+#endif
+
             float radius_ = agent.radius_;
             float invTimeHorizonObst = 1.0f / agent.timeHorizonObst_;
 
             float2 velocity_ = agent.velocity_;
             float2 position_ = agent.position_;
 
+#if OPEN_PROFILER
             UnityEngine.Profiling.Profiler.BeginSample("[RVO] ROCA.computeNewVelocity - create obstacle ORCA lines");
+#endif
             /* Create obstacle ORCA lines. */
             for (int i = 0; i < obstacleNeighbors.Length; ++i)
             {
@@ -304,12 +332,12 @@ namespace RVO
                 orcaLines.Add(line);
             }
 
+#if OPEN_PROFILER
             UnityEngine.Profiling.Profiler.EndSample();
-
             UnityEngine.Profiling.Profiler.BeginSample("[RVO] ROCA.computeNewVelocity - create agent ORCA lines");
+#endif
 
             int numObstLines = orcaLines.Length;
-
             float invTimeHorizon = 1.0f / agent.timeHorizon_;
             /* Collision. Project on cut-off circle of time timeStep. */
             float invTimeStep = 1.0f / Simulator.Instance.timeStep_;
@@ -385,21 +413,27 @@ namespace RVO
                 orcaLines.Add(line);
             }
 
+#if OPEN_PROFILER
             UnityEngine.Profiling.Profiler.BeginSample("[RVO] ROCA.computeNewVelocity - linearProgram2/3");
-            float2 newVelocity__ = agent.newVelocity_;
-            int lineFail = linearProgram2(in orcaLines, agent.maxSpeed_, agent.prefVelocity_, false, ref newVelocity__);
+#endif
+            float2 newVelocity_ = agent.newVelocity_;
+            int lineFail = linearProgram2(in orcaLines, agent.maxSpeed_, agent.prefVelocity_, false, ref newVelocity_);
 
             if (lineFail < orcaLines.Length)
             {
-                linearProgram3(in orcaLines, numObstLines, lineFail, agent.maxSpeed_, ref newVelocity__);
+                linearProgram3(in orcaLines, numObstLines, lineFail, agent.maxSpeed_, ref newVelocity_);
             }
             // UnityEngine.Debug.Log($"id: {agent.id_} cur vel:{velocity_} new vel: {agent.newVelocity_} to {newVelocity__} agentNeighbors:{agentNeighbors.Length} this.{agent.newVelocity_} {agent.velocity_} {orcaLines.Length}");
-            agent.newVelocity_ = newVelocity__;
-            UnityEngine.Profiling.Profiler.EndSample();
+            agent.newVelocity_ = newVelocity_;
 
+#if OPEN_PROFILER
             UnityEngine.Profiling.Profiler.EndSample();
+            UnityEngine.Profiling.Profiler.EndSample();
+#endif
 
+#if !OPTIMIZED_LINEAR
             orcaLines.Dispose();
+#endif
         }
 
         /**
@@ -477,7 +511,11 @@ namespace RVO
                 if (RVOMath.det(lines[i].direction, lines[i].point - result) > distance)
                 {
                     /* Result does not satisfy constraint of line i. */
-                    NativeList<Line> projLines = new NativeList<Line>(16, Allocator.Temp);
+#if OPTIMIZED_LINEAR
+                    projLines.Clear();
+#else
+                    NativeList<Line> projLines = new NativeList<Line>(lines.Length, Allocator.Temp);
+#endif
                     for (int ii = 0; ii < numObstLines; ++ii)
                     {
                         projLines.Add(lines[ii]);
@@ -525,7 +563,12 @@ namespace RVO
                     }
 
                     distance = RVOMath.det(lines[i].direction, lines[i].point - result);
+
+#if OPTIMIZED_LINEAR
+                    projLines.Clear();
+#else
                     projLines.Dispose();
+#endif
                 }
             }
         }

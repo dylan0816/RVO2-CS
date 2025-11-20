@@ -42,6 +42,7 @@ namespace RVO
             UnityEngine.Profiling.Profiler.EndSample();
 
             // 避障计算
+            ROCA.Allocate();
             for (int agentNo = 0; agentNo < agentCount; ++agentNo)
             {
                 Agent agent = simulator.agents_[agentNo];
@@ -69,6 +70,7 @@ namespace RVO
                 UnityEngine.Profiling.Profiler.EndSample();
                 simulator.agents_[agentNo] = agent;
             }
+            ROCA.Deallocate();
 
             agentsReadOnly.Dispose();
             agentTreeReadOnly_.Dispose();

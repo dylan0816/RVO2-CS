@@ -1,3 +1,4 @@
+#define OPEN_PROFILER
 
 namespace RVO
 {
@@ -29,21 +30,26 @@ namespace RVO
             int agentCount = simulator.agents_.Length;
 
             // 构建 树
-
+#if OPEN_PROFILER
             UnityEngine.Profiling.Profiler.BeginSample("[RVO] Grid Allocator.Temp");
+#endif
             NativeArray<Agent> agentsReadOnly = new NativeArray<Agent>(agentCount, Allocator.Temp);
             NativeMultiHashMap<int, int> agentTreeReadOnly_ = new NativeMultiHashMap<int, int>(agentCount, Allocator.Temp);
             NativeList<Pair> obstacleNeighbors = new NativeList<Pair>(32, Allocator.Temp);
             NativeList<Pair> agentNeighbors = new NativeList<Pair>(128, Allocator.Temp);
-            UnityEngine.Profiling.Profiler.EndSample();
 
+#if OPEN_PROFILER
+            UnityEngine.Profiling.Profiler.EndSample();
             UnityEngine.Profiling.Profiler.BeginSample("[RVO] buildAgentTree");
+#endif
+
             for (int i = 0; i < agentsReadOnly.Length; ++i) agentsReadOnly[i] = simulator.agents_[i];
             tree.Bind(tree.CalculateCellSize(simulator.getAgentRadius(), simulator.getAgentNeighborDist()), ref agentTreeReadOnly_);
             tree.buildAgentTree(ref agentsReadOnly);
             UnityEngine.Profiling.Profiler.EndSample();
 
             // 避障计算
+            ROCA.Allocate();
             for (int agentNo = 0; agentNo < agentCount; ++agentNo)
             {
                 Agent agent = simulator.agents_[agentNo];
@@ -51,26 +57,40 @@ namespace RVO
                 // 查找 邻居
                 obstacleNeighbors.Clear();
                 agentNeighbors.Clear();
-
+#if OPEN_PROFILER
                 UnityEngine.Profiling.Profiler.BeginSample("[RVO] computeObstacleNeighbors");
+#endif
                 float rangeSq = RVOMath.sqr(agent.timeHorizonObst_ * agent.maxSpeed_ + agent.radius_);
                 tree.computeObstacleNeighbors(ref agent, in simulator.obstacles_, rangeSq, ref obstacleNeighbors);
+
+#if OPEN_PROFILER
                 UnityEngine.Profiling.Profiler.EndSample();
+#endif
 
                 if (agent.maxNeighbors_ > 0)
                 {
+#if OPEN_PROFILER
                     UnityEngine.Profiling.Profiler.BeginSample("[RVO] computeAgentNeighbors");
+#endif
                     rangeSq = RVOMath.sqr(agent.neighborDist_);
                     tree.computeAgentNeighbors(in agent, in agentsReadOnly, ref rangeSq, ref agentNeighbors);
+#if OPEN_PROFILER
                     UnityEngine.Profiling.Profiler.EndSample();
+#endif
+
                 }
 
                 // 计算 ORCA 新速度
+#if OPEN_PROFILER
                 UnityEngine.Profiling.Profiler.BeginSample("[RVO] ROCA.computeNewVelocity");
+#endif
                 ROCA.computeNewVelocity(ref agent, simulator.agents_, simulator.obstacles_, in obstacleNeighbors, in agentNeighbors);
+#if OPEN_PROFILER
                 UnityEngine.Profiling.Profiler.EndSample();
+#endif
                 simulator.agents_[agentNo] = agent;
             }
+            ROCA.Deallocate();
 
             agentsReadOnly.Dispose();
             agentTreeReadOnly_.Dispose();
