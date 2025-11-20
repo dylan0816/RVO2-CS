@@ -45,6 +45,8 @@ namespace RVO
             for (int i = 0; i < agents.Length; i++)
             {
                 Agent agent = agents[i];
+                if (!agent.valid_) continue;
+
                 int cellX = (int)math.floor(agent.position_.x / cellsize_);
                 int cellY = (int)math.floor(agent.position_.y / cellsize_);
                 int cellId = getCellHashCode(ref cellX, ref cellY);

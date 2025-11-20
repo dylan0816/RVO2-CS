@@ -53,7 +53,7 @@ namespace RVO
             for (int agentNo = 0; agentNo < agentCount; ++agentNo)
             {
                 Agent agent = simulator.agents_[agentNo];
-                if (agent.static_) continue;
+                if (agent.frozen_ || !agent.valid_) continue;
 
                 // 查找 邻居
                 obstacleNeighbors.Clear();

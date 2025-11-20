@@ -77,7 +77,7 @@ namespace RVO
          * <param name="position">The two-dimensional starting position of this
          * agent.</param>
          */
-        public int addAgent(float2 position, bool static_ = false)
+        public int addAgent(float2 position, bool valid = true, bool frozen = false)
         {
             Agent agent = new Agent();
             agent.id_ = agents_.Length;
@@ -90,7 +90,8 @@ namespace RVO
             agent.timeHorizon_ = defaultAgent_.timeHorizon_;
             agent.timeHorizonObst_ = defaultAgent_.timeHorizonObst_;
             agent.velocity_ = defaultAgent_.velocity_;
-            agent.static_ = static_;
+            agent.valid_ = valid;
+            agent.frozen_ = frozen;
             agents_.Add(agent);
             return agent.id_;
         }
@@ -129,7 +130,7 @@ namespace RVO
          * <param name="velocity">The initial two-dimensional linear velocity of
          * this agent.</param>
          */
-        public int addAgent(float2 position, float neighborDist, int maxNeighbors, float timeHorizon, float timeHorizonObst, float radius, float maxSpeed, float2 velocity)
+        public int addAgent(float2 position, float neighborDist, int maxNeighbors, float timeHorizon, float timeHorizonObst, float radius, float maxSpeed, float2 velocity, bool valid = true, bool frozen = false)
         {
             Agent agent = new Agent();
             agent.id_ = agents_.Length;
@@ -141,6 +142,8 @@ namespace RVO
             agent.timeHorizon_ = timeHorizon;
             agent.timeHorizonObst_ = timeHorizonObst;
             agent.velocity_ = velocity;
+            agent.valid_ = valid;
+            agent.frozen_ = frozen;
             agents_.Add(agent);
 
             return agent.id_;
@@ -509,7 +512,7 @@ namespace RVO
          * <param name="velocity">The default initial two-dimensional linear
          * velocity of a new agent.</param>
          */
-        public void setAgentDefaults(float neighborDist, int maxNeighbors, float timeHorizon, float timeHorizonObst, float radius, float maxSpeed, float2 velocity)
+        public void setAgentDefaults(float neighborDist, int maxNeighbors, float timeHorizon, float timeHorizonObst, float radius, float maxSpeed, float2 velocity, bool valid = true, bool frozen = false)
         {
             defaultAgent_ = new Agent();
             defaultAgent_.id_ = -1;
@@ -521,6 +524,8 @@ namespace RVO
             defaultAgent_.timeHorizon_ = timeHorizon;
             defaultAgent_.timeHorizonObst_ = timeHorizonObst;
             defaultAgent_.velocity_ = velocity;
+            defaultAgent_.valid_ = valid;
+            defaultAgent_.frozen_ = frozen;
         }
 
         /**

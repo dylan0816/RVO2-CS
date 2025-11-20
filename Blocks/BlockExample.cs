@@ -264,8 +264,11 @@ namespace RVO
 
         private void OnDestroy()
         {
+#if USED_GRID_RUNTIME
             UniformGridRuntime.Clear();
+#else
             KDRunntime.Clear();
+#endif
             Simulator.Instance.Clear();
             Simulator.Instance.Dispose();
         }
