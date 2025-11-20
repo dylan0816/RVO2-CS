@@ -22,10 +22,6 @@ namespace RVO
         NativeArray<int> dirs;
         NativeMultiHashMap<int, int> gridCells;
 
-#if RVOCS_MAX_HEAP
-        RVOMaxHeap maxheap;
-#endif
-
         #region Obstacles Tree
         private int obstacleTreeNodeIdx_;
         private NativeArray<ObstacleTreeNode> obstacleTreeNodes_;
@@ -52,10 +48,6 @@ namespace RVO
 
             cellsize_ = cellsize;
             this.gridCells = gridCells;
-
-#if RVOCS_MAX_HEAP
-            maxheap = new RVOMaxHeap(256);
-#endif
         }
 
         public void buildAgentTree(ref NativeArray<Agent> agents)
@@ -84,10 +76,7 @@ namespace RVO
 
         public void computeAgentNeighbors(in Agent agent, in NativeArray<Agent> agents, ref float rangeSq, ref NativeList<Pair> agentNeighbors)
         {
-#if RVOCS_MAX_HEAP
-            maxheap.Clear();
-#endif
-            // UnityEngine.Profiling.Profiler.BeginSample("[RVO] Grid computeAgentNeighbors Start");
+
             agentNeighbors.Clear();
             int maxNeighbors = agent.maxNeighbors_;
             float neighborDistSq = agent.neighborDist_ * agent.neighborDist_;
@@ -111,57 +100,24 @@ namespace RVO
                             float dSq = math.distancesq(agent.position_, agents[id].position_);
                             if (dSq <= neighborDistSq)
                             {
-#if RVOCS_MAX_HEAP
-                                maxheap.Push(new Pair(dSq, id));
-#else
                                 agentNeighbors.Add(new Pair(dSq, id));
-#endif
                             }
                         }
                         while (gridCells.TryGetNextValue(out id, ref iter));
                     }
                 }
             }
-            // UnityEngine.Profiling.Profiler.EndSample();
-            // UnityEngine.Debug.Log("agentNeighbors Length Before Sort: " + agentNeighbors.Length);
-#if RVOCS_MAX_HEAP
-            if (maxheap.Count > 0)
-            {
-                // UnityEngine.Profiling.Profiler.BeginSample("[RVO] Grid computeAgentNeighbors Pop");
-                while (maxheap.Next(out Pair pair))
-                    agentNeighbors.Add(pair);
-                // UnityEngine.Profiling.Profiler.EndSample();
-            }
-#endif
 
             if (agentNeighbors.Length > 0)
             {
-                // UnityEngine.Profiling.Profiler.BeginSample("[RVO] Grid computeAgentNeighbors Sort");
-#if !RVOCS_MAX_HEAP
+                Pair.IDCompare = false;
                 agentNeighbors.Sort();
-#endif
-                // UnityEngine.Profiling.Profiler.EndSample();
 
-                // UnityEngine.Profiling.Profiler.BeginSample("[RVO] Grid computeAgentNeighbors RemoveRange");
                 if (agentNeighbors.Length > maxNeighbors)
                     agentNeighbors.RemoveRange(maxNeighbors, agentNeighbors.Length - maxNeighbors);
-                // UnityEngine.Profiling.Profiler.EndSample();
 
-                // UnityEngine.Profiling.Profiler.BeginSample("[RVO] Grid computeAgentNeighbors Sort id");
-
-                // agentNeighbors.Sort();
-                for (int i = 1; i < agentNeighbors.Length; i++)
-                {
-                    var key = agentNeighbors[i];
-                    int j = i - 1;
-                    while (j >= 0 && agentNeighbors[j].id > key.id)
-                    {
-                        agentNeighbors[j + 1] = agentNeighbors[j];
-                        j--;
-                    }
-                    agentNeighbors[j + 1] = key;
-                }
-                // UnityEngine.Profiling.Profiler.EndSample();
+                Pair.IDCompare = true;
+                agentNeighbors.Sort();
             }
         }
 

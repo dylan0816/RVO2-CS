@@ -6,97 +6,9 @@ namespace RVO
     using Unity.Mathematics;
     using Unity.Collections;
 
-    public struct RVOMaxHeap : System.IDisposable
-    {
-        private struct Leaf
-        {
-            public int idx;
-            public Pair pair;
-            public int next;
-            public int pre;
-        }
-
-        private NativeArray<Leaf> items; // small K, use managed array on stack-like usage
-        private int position;
-        public int Count => position;
-
-        public RVOMaxHeap(int capacity = 256)
-        {
-            items = new NativeArray<Leaf>(capacity, Allocator.Temp);
-            items[0] = new Leaf() { idx = 0, next = 0, pre = 0 };
-            position = 0;
-            isdisposing = false;
-        }
-
-        // push candidate (distSq, id)
-        public void Push(Pair p)
-        {
-            position++;
-            Leaf newleaf = items[position];
-            Leaf head = items[0];
-            Leaf next = items[head.next];
-
-            while (next.pair.distSq > p.distSq)
-            {
-                next = items[next.next];
-                if (next.idx == head.idx) break;
-            }
-
-            int nextIdx = next.idx;
-            int preIdx = next.pre;
-
-            newleaf.idx = position;
-            newleaf.pre = preIdx;
-            newleaf.next = nextIdx;
-            newleaf.pair = p;
-            items[position] = newleaf;
-
-            next = items[nextIdx];
-            next.pre = position;
-            items[nextIdx] = next;
-
-            Leaf pre = items[preIdx];
-            pre.next = position;
-            items[preIdx] = pre;
-        }
-
-        public bool Next(out Pair p)
-        {
-            Leaf head = items[0];
-            if (head.next == 0)
-            {
-                p = new Pair();
-                return false;
-            }
-
-            Leaf removeLeaf = items[head.next];
-            p = removeLeaf.pair;
-
-            head.next = removeLeaf.next;
-            items[head.idx] = head;
-            return true;
-        }
-
-        public void Clear()
-        {
-            position = 0;
-            items[0] = new Leaf() { idx = 0, next = 0, pre = 0 };
-        }
-
-        bool isdisposing;
-        public void Dispose()
-        {
-            if (!isdisposing)
-            {
-                isdisposing = true;
-                items.Dispose();
-            }
-        }
-    }
-
-
     public struct Pair : IComparer<Pair>, System.IEquatable<Pair>, System.IComparable<Pair>
     {
+        public static bool IDCompare = false;
         public int id;
         public float distSq;
 
@@ -108,18 +20,11 @@ namespace RVO
         public static bool operator ==(Pair a, Pair b) => a.id == b.id;
         public static bool operator !=(Pair a, Pair b) => a.id == b.id;
 
+        public static bool operator >(Pair a, Pair b) => IDCompare ? a.id > b.id : a.distSq > b.distSq;
+        public static bool operator <(Pair a, Pair b) => IDCompare ? a.id < b.id : a.distSq < b.distSq;
+        public int Compare(Pair x, Pair y) => IDCompare ? (x.id > y.id ? 1 : (x.id < y.id ? -1 : 0)) : (x.distSq > y.distSq ? 1 : (x.distSq < y.distSq ? -1 : 0));
+        public int CompareTo(Pair other) => IDCompare ? (id > other.id ? 1 : (id < other.id ? -1 : 0)) : (distSq > other.distSq ? 1 : (distSq < other.distSq ? -1 : 0));
 
-#if RVOCS_PAIR_COMPARER_BY_ID
-        public static bool operator >(Pair a, Pair b) => a.id > b.id;
-        public static bool operator <(Pair a, Pair b) => a.id < b.id;
-        public int Compare(Pair x, Pair y) => x.id > y.id ? 1 : (x.id < y.id ? -1 : 0);
-        public int CompareTo(Pair other) => id > other.id ? 1 : (id < other.id ? -1 : 0);
-#else
-        public static bool operator >(Pair a, Pair b) => a.distSq > b.distSq;
-        public static bool operator <(Pair a, Pair b) => a.distSq < b.distSq;
-        public int Compare(Pair x, Pair y) => x.distSq > y.distSq ? 1 : (x.distSq < y.distSq ? -1 : 0);
-        public int CompareTo(Pair other) => distSq > other.distSq ? 1 : (distSq < other.distSq ? -1 : 0);
-#endif
     }
 
     public static class ROCA
@@ -231,9 +136,7 @@ namespace RVO
                  * can come from a single vertex. Legs extend cut-off line when
                  * non-convex vertex.
                  */
-
                 float2 leftLegDirection, rightLegDirection;
-
                 if (s < 0.0f && distSqLine <= radiusSq)
                 {
                     /*
