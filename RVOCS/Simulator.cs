@@ -42,23 +42,7 @@ using Unity.VisualScripting;
 
 namespace RVO
 {
-    public struct Pair : IComparer<Pair>, IEquatable<Pair>, IComparable<Pair>
-    {
-        public int id;
-        public float distSq;
 
-        public Pair(float destance, int id) => (this.id, this.distSq) = (id, destance);
-
-        public int Compare(Pair x, Pair y) => x.id > y.id ? 1 : (x.id < y.id ? -1 : 0);
-        public int CompareTo(Pair other) => id > other.id ? 1 : (id < other.id ? -1 : 0);
-        public bool Equals(Pair other) => id == other.id;
-        public override bool Equals(object obj) => base.Equals(obj);
-        override public int GetHashCode() => base.GetHashCode();
-        public static bool operator ==(Pair a, Pair b) => a.id == b.id;
-        public static bool operator !=(Pair a, Pair b) => a.id == b.id;
-        public static bool operator >(Pair a, Pair b) => a.id > b.id;
-        public static bool operator <(Pair a, Pair b) => a.id < b.id;
-    }
 
     /**
      * <summary>Defines the simulation.</summary>
@@ -313,6 +297,11 @@ namespace RVO
         public float getAgentRadius(int agentNo)
         {
             return agents_[agentNo].radius_;
+        }
+
+        public float getAgentRadius()
+        {
+            return defaultAgent_.radius_;
         }
 
         /**

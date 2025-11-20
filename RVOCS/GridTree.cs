@@ -1,10 +1,11 @@
-
+// #define RVOCS_MAX_HEAP
 using System;
 using System.Collections.Generic;
 using System.Security;
 using Unity.Collections;
 using Unity.Mathematics;
 using Unity.VisualScripting;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace RVO
@@ -19,7 +20,12 @@ namespace RVO
         internal float cellsize_;
 
         NativeArray<int> dirs;
-        NativeHashMap<int, FixedList64Bytes<int>> gridCells;
+        NativeMultiHashMap<int, int> gridCells;
+
+#if RVOCS_MAX_HEAP
+        RVOMaxHeap maxheap;
+#endif
+
         #region Obstacles Tree
         private int obstacleTreeNodeIdx_;
         private NativeArray<ObstacleTreeNode> obstacleTreeNodes_;
@@ -28,11 +34,11 @@ namespace RVO
 
         public static int getCellHashCode(ref int x, ref int y) => x * 73856093 ^ y * 19349663;
 
-        public float CalculateCellSize(float neighborDist)
+        public float CalculateCellSize(float radians, float neighborDist)
         {
-            return neighborDist * 0.6f;
+            return radians * 2.1f;
         }
-        public void Bind(float cellsize, ref NativeHashMap<int, FixedList64Bytes<int>> gridCells)
+        public void Bind(float cellsize, ref NativeMultiHashMap<int, int> gridCells)
         {
             if (!dirs.IsCreated)
             {
@@ -46,6 +52,10 @@ namespace RVO
 
             cellsize_ = cellsize;
             this.gridCells = gridCells;
+
+#if RVOCS_MAX_HEAP
+            maxheap = new RVOMaxHeap(256);
+#endif
         }
 
         public void buildAgentTree(ref NativeArray<Agent> agents)
@@ -57,22 +67,7 @@ namespace RVO
                 int cellX = (int)math.floor(agent.position_.x / cellsize_);
                 int cellY = (int)math.floor(agent.position_.y / cellsize_);
                 int cellId = getCellHashCode(ref cellX, ref cellY);
-
-                if (!gridCells.ContainsKey(cellId))
-                {
-                    gridCells[cellId] = new FixedList64Bytes<int>();
-                }
-
-                if (gridCells[cellId].Length >= MAX_LEAF_SIZE)
-                {
-                    agent.valid_ = false;
-                    continue;
-                }
-                else agent.valid_ = true;
-
-                FixedList64Bytes<int> list = gridCells[cellId];
-                list.Add(agent.id_);
-                gridCells[cellId] = list;
+                gridCells.Add(cellId, agent.id_);
             }
         }
 
@@ -89,52 +84,85 @@ namespace RVO
 
         public void computeAgentNeighbors(in Agent agent, in NativeArray<Agent> agents, ref float rangeSq, ref NativeList<Pair> agentNeighbors)
         {
+#if RVOCS_MAX_HEAP
+            maxheap.Clear();
+#endif
+            // UnityEngine.Profiling.Profiler.BeginSample("[RVO] Grid computeAgentNeighbors Start");
             agentNeighbors.Clear();
             int maxNeighbors = agent.maxNeighbors_;
-            float neighborDist_ = agent.neighborDist_ * agent.neighborDist_;
+            float neighborDistSq = agent.neighborDist_ * agent.neighborDist_;
 
             int cellX = (int)math.floor(agent.position_.x / cellsize_);
             int cellY = (int)math.floor(agent.position_.y / cellsize_);
-            int cellId = getCellHashCode(ref cellX, ref cellY);
-            FixedList64Bytes<int> cells = gridCells[cellId];
 
-
-            for (int i = math.min(maxNeighbors, cells.Length - 1); i >= 0; i--)
+            for (int dx = -1; dx <= 1; dx++)
             {
-                if (cells[i] == agent.id_) continue;
-                int agentId = cells[i];
-                float distSq = math.distancesq(agent.position_, agents[agentId].position_);
-                if (distSq < neighborDist_) agentNeighbors.Add(new Pair(distSq, cells[i]));
-            }
-
-
-            int index = 0;
-            int round = agent.maxNeighbors_;
-
-            while (round > 0 && agentNeighbors.Length < maxNeighbors)
-            {
-                bool hasMore = false;
-                for (int i = dirs.Length - 2; i >= 0 && agentNeighbors.Length < maxNeighbors; i--)
+                for (int dy = -1; dy <= 1; dy++)
                 {
-                    int neighborCellX = cellX + dirs[i];
-                    int neighborCellY = cellY + dirs[i + 1];
-                    int neighborCellId = getCellHashCode(ref neighborCellX, ref neighborCellY);
-
-                    if (gridCells.ContainsKey(neighborCellId) && gridCells[neighborCellId].Length > index)
+                    int nx = cellX + dx;
+                    int ny = cellY + dy;
+                    int hash = getCellHashCode(ref nx, ref ny);
+                    if (gridCells.TryGetFirstValue(hash, out int id, out var iter))
                     {
-                        hasMore = true;
-                        int agentId = gridCells[neighborCellId][index];
-                        float distSq = math.distancesq(agent.position_, agents[agentId].position_);
-                        if (distSq < neighborDist_) agentNeighbors.Add(new Pair(distSq, agentId));
+                        do
+                        {
+                            if (id == agent.id_) continue;
+
+                            float dSq = math.distancesq(agent.position_, agents[id].position_);
+                            if (dSq <= neighborDistSq)
+                            {
+#if RVOCS_MAX_HEAP
+                                maxheap.Push(new Pair(dSq, id));
+#else
+                                agentNeighbors.Add(new Pair(dSq, id));
+#endif
+                            }
+                        }
+                        while (gridCells.TryGetNextValue(out id, ref iter));
                     }
                 }
-                round--;
-                index++;
-
-                if (!hasMore) break;
             }
+            // UnityEngine.Profiling.Profiler.EndSample();
+            // UnityEngine.Debug.Log("agentNeighbors Length Before Sort: " + agentNeighbors.Length);
+#if RVOCS_MAX_HEAP
+            if (maxheap.Count > 0)
+            {
+                // UnityEngine.Profiling.Profiler.BeginSample("[RVO] Grid computeAgentNeighbors Pop");
+                while (maxheap.Next(out Pair pair))
+                    agentNeighbors.Add(pair);
+                // UnityEngine.Profiling.Profiler.EndSample();
+            }
+#endif
 
-            agentNeighbors.Sort();
+            if (agentNeighbors.Length > 0)
+            {
+                // UnityEngine.Profiling.Profiler.BeginSample("[RVO] Grid computeAgentNeighbors Sort");
+#if !RVOCS_MAX_HEAP
+                agentNeighbors.Sort();
+#endif
+                // UnityEngine.Profiling.Profiler.EndSample();
+
+                // UnityEngine.Profiling.Profiler.BeginSample("[RVO] Grid computeAgentNeighbors RemoveRange");
+                if (agentNeighbors.Length > maxNeighbors)
+                    agentNeighbors.RemoveRange(maxNeighbors, agentNeighbors.Length - maxNeighbors);
+                // UnityEngine.Profiling.Profiler.EndSample();
+
+                // UnityEngine.Profiling.Profiler.BeginSample("[RVO] Grid computeAgentNeighbors Sort id");
+
+                // agentNeighbors.Sort();
+                for (int i = 1; i < agentNeighbors.Length; i++)
+                {
+                    var key = agentNeighbors[i];
+                    int j = i - 1;
+                    while (j >= 0 && agentNeighbors[j].id > key.id)
+                    {
+                        agentNeighbors[j + 1] = agentNeighbors[j];
+                        j--;
+                    }
+                    agentNeighbors[j + 1] = key;
+                }
+                // UnityEngine.Profiling.Profiler.EndSample();
+            }
         }
 
         public void computeObstacleNeighbors(ref Agent agent, in NativeList<Obstacle> obstacles, float rangeSq, ref NativeList<Pair> obstacleNeighbors)
@@ -380,6 +408,9 @@ namespace RVO
 
         public void Clear()
         {
+#if RVOCS_MAX_HEAP
+            maxheap.Dispose();
+#endif
         }
         public void Dispose()
         {

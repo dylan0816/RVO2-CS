@@ -30,16 +30,16 @@ namespace RVO
 
             // 构建 树
 
-            UnityEngine.Profiling.Profiler.BeginSample("[RVO] Allocator.Temp");
+            UnityEngine.Profiling.Profiler.BeginSample("[RVO] Grid Allocator.Temp");
             NativeArray<Agent> agentsReadOnly = new NativeArray<Agent>(agentCount, Allocator.Temp);
-            NativeHashMap<int, FixedList64Bytes<int>> agentTreeReadOnly_ = new NativeHashMap<int, FixedList64Bytes<int>>(agentCount, Allocator.Temp);
-            NativeList<Pair> obstacleNeighbors = new NativeList<Pair>(16, Allocator.Temp);
-            NativeList<Pair> agentNeighbors = new NativeList<Pair>(16, Allocator.Temp);
+            NativeMultiHashMap<int, int> agentTreeReadOnly_ = new NativeMultiHashMap<int, int>(agentCount, Allocator.Temp);
+            NativeList<Pair> obstacleNeighbors = new NativeList<Pair>(32, Allocator.Temp);
+            NativeList<Pair> agentNeighbors = new NativeList<Pair>(128, Allocator.Temp);
             UnityEngine.Profiling.Profiler.EndSample();
 
             UnityEngine.Profiling.Profiler.BeginSample("[RVO] buildAgentTree");
             for (int i = 0; i < agentsReadOnly.Length; ++i) agentsReadOnly[i] = simulator.agents_[i];
-            tree.Bind(tree.CalculateCellSize(simulator.getAgentNeighborDist()), ref agentTreeReadOnly_);
+            tree.Bind(tree.CalculateCellSize(simulator.getAgentRadius(), simulator.getAgentNeighborDist()), ref agentTreeReadOnly_);
             tree.buildAgentTree(ref agentsReadOnly);
             UnityEngine.Profiling.Profiler.EndSample();
 
@@ -83,6 +83,7 @@ namespace RVO
                 simulator.agents_[agentNo] = agent.update(simulator);
             }
 
+            tree.Clear();
             return simulator.doStep();
         }
 
