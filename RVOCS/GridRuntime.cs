@@ -39,7 +39,7 @@ namespace RVO
 
             UnityEngine.Profiling.Profiler.BeginSample("[RVO] buildAgentTree");
             for (int i = 0; i < agentsReadOnly.Length; ++i) agentsReadOnly[i] = simulator.agents_[i];
-            tree.Bind(math.ceil(2 * 1.5f), ref agentTreeReadOnly_);
+            tree.Bind(tree.CalculateCellSize(simulator.getAgentNeighborDist()), ref agentTreeReadOnly_);
             tree.buildAgentTree(ref agentsReadOnly);
             UnityEngine.Profiling.Profiler.EndSample();
 

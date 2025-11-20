@@ -33,6 +33,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -41,19 +42,22 @@ using Unity.VisualScripting;
 
 namespace RVO
 {
-    public struct Pair : IComparer<int>, IEquatable<Pair>
+    public struct Pair : IComparer<Pair>, IEquatable<Pair>, IComparable<Pair>
     {
         public int id;
         public float distSq;
 
         public Pair(float destance, int id) => (this.id, this.distSq) = (id, destance);
 
-        public int Compare(int x, int y) => x > y ? 1 : (x < y ? -1 : 0);
+        public int Compare(Pair x, Pair y) => x.id > y.id ? 1 : (x.id < y.id ? -1 : 0);
+        public int CompareTo(Pair other) => id > other.id ? 1 : (id < other.id ? -1 : 0);
         public bool Equals(Pair other) => id == other.id;
         public override bool Equals(object obj) => base.Equals(obj);
         override public int GetHashCode() => base.GetHashCode();
         public static bool operator ==(Pair a, Pair b) => a.id == b.id;
         public static bool operator !=(Pair a, Pair b) => a.id == b.id;
+        public static bool operator >(Pair a, Pair b) => a.id > b.id;
+        public static bool operator <(Pair a, Pair b) => a.id < b.id;
     }
 
     /**
@@ -261,6 +265,11 @@ namespace RVO
         public float getAgentNeighborDist(int agentNo)
         {
             return agents_[agentNo].neighborDist_;
+        }
+
+        public float getAgentNeighborDist()
+        {
+            return defaultAgent_.neighborDist_;
         }
 
         /**

@@ -28,6 +28,10 @@ namespace RVO
 
         public static int getCellHashCode(ref int x, ref int y) => x * 73856093 ^ y * 19349663;
 
+        public float CalculateCellSize(float neighborDist)
+        {
+            return neighborDist * 0.6f;
+        }
         public void Bind(float cellsize, ref NativeHashMap<int, FixedList64Bytes<int>> gridCells)
         {
             if (!dirs.IsCreated)
@@ -50,8 +54,8 @@ namespace RVO
             for (int i = 0; i < agents.Length; i++)
             {
                 Agent agent = agents[i];
-                int cellX = (int)math.floor(agent.position_.x / (cellsize_ * 2));
-                int cellY = (int)math.floor(agent.position_.y / (cellsize_ * 2));
+                int cellX = (int)math.floor(agent.position_.x / cellsize_);
+                int cellY = (int)math.floor(agent.position_.y / cellsize_);
                 int cellId = getCellHashCode(ref cellX, ref cellY);
 
                 if (!gridCells.ContainsKey(cellId))
@@ -85,19 +89,28 @@ namespace RVO
 
         public void computeAgentNeighbors(in Agent agent, in NativeArray<Agent> agents, ref float rangeSq, ref NativeList<Pair> agentNeighbors)
         {
-            int cellX = (int)math.floor(agent.position_.x / (cellsize_ * 2));
-            int cellY = (int)math.floor(agent.position_.y / (cellsize_ * 2));
-            int cellId = getCellHashCode(ref cellX, ref cellY);
+            agentNeighbors.Clear();
+            int maxNeighbors = agent.maxNeighbors_;
+            float neighborDist_ = agent.neighborDist_ * agent.neighborDist_;
 
+            int cellX = (int)math.floor(agent.position_.x / cellsize_);
+            int cellY = (int)math.floor(agent.position_.y / cellsize_);
+            int cellId = getCellHashCode(ref cellX, ref cellY);
             FixedList64Bytes<int> cells = gridCells[cellId];
 
-            for (int i = cells.Length - 1; i >= 0; i--)
-                agentNeighbors.Add(new Pair(math.distancesq(agent.position_, agents[cells[i]].position_), cells[i]));
+
+            for (int i = math.min(maxNeighbors, cells.Length - 1); i >= 0; i--)
+            {
+                if (cells[i] == agent.id_) continue;
+                int agentId = cells[i];
+                float distSq = math.distancesq(agent.position_, agents[agentId].position_);
+                if (distSq < neighborDist_) agentNeighbors.Add(new Pair(distSq, cells[i]));
+            }
+
 
             int index = 0;
             int round = agent.maxNeighbors_;
-            int maxNeighbors = agent.maxNeighbors_;
-            float neighborDist_ = agent.neighborDist_ * agent.neighborDist_;
+
             while (round > 0 && agentNeighbors.Length < maxNeighbors)
             {
                 bool hasMore = false;
@@ -112,8 +125,7 @@ namespace RVO
                         hasMore = true;
                         int agentId = gridCells[neighborCellId][index];
                         float distSq = math.distancesq(agent.position_, agents[agentId].position_);
-                        if (distSq < neighborDist_)
-                            agentNeighbors.Add(new Pair(distSq, agentId));
+                        if (distSq < neighborDist_) agentNeighbors.Add(new Pair(distSq, agentId));
                     }
                 }
                 round--;
@@ -122,7 +134,7 @@ namespace RVO
                 if (!hasMore) break;
             }
 
-            // agentNeighbors.Sort();
+            agentNeighbors.Sort();
         }
 
         public void computeObstacleNeighbors(ref Agent agent, in NativeList<Obstacle> obstacles, float rangeSq, ref NativeList<Pair> obstacleNeighbors)
