@@ -32,8 +32,6 @@
  */
 
 using System;
-using System.Collections.Generic;
-using Unity.Collections;
 using Unity.Mathematics;
 
 namespace RVO
@@ -55,8 +53,8 @@ namespace RVO
         internal float timeHorizonObst_;
 
         internal float2 newVelocity_;
-        // internal bool valid_;
-        internal bool static_;
+        internal bool valid_;
+        internal bool frozen_;
 
         public override bool Equals(object obj) => base.Equals(obj);
         public override int GetHashCode() => base.GetHashCode();

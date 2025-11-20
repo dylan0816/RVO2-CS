@@ -31,7 +31,7 @@ namespace RVO
             UnityEngine.Profiling.Profiler.BeginSample("[RVO] Grid Allocator.Temp");
 #endif
             NativeArray<Agent> agentsReadOnly = new NativeArray<Agent>(agentCount, Allocator.Temp);
-            NativeMultiHashMap<int, int> agentTreeReadOnly_ = new NativeMultiHashMap<int, int>(agentCount, Allocator.Temp);
+            NativeParallelMultiHashMap<int, int> agentTreeReadOnly_ = new NativeParallelMultiHashMap<int, int>(agentCount, Allocator.Temp);
             NativeList<Pair> obstacleNeighbors = new NativeList<Pair>(32, Allocator.Temp);
             NativeList<Pair> agentNeighbors = new NativeList<Pair>(128, Allocator.Temp);
 
@@ -53,7 +53,7 @@ namespace RVO
             for (int agentNo = 0; agentNo < agentCount; ++agentNo)
             {
                 Agent agent = simulator.agents_[agentNo];
-                if (agent.static_) continue;
+                if (agent.frozen_ || !agent.valid_) continue;
 
                 // 查找 邻居
                 obstacleNeighbors.Clear();

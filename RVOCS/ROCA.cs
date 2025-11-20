@@ -8,8 +8,8 @@ namespace RVO
     using Unity.Collections;
 
     /**
-         * <summary>Defines a node of an obstacle k-D tree.</summary>
-         */
+     * <summary>Defines a node of an obstacle k-D tree.</summary>
+     */
     public struct ObstacleTreeNode
     {
         public int idx;
@@ -17,6 +17,89 @@ namespace RVO
         internal int left_;
         internal int right_;
     };
+
+    /**
+     * <summary>Defines a pair of scalar values.</summary>
+     */
+    public struct FloatPair
+    {
+        private readonly float a_;
+        private readonly float b_;
+
+        /**
+         * <summary>Constructs and initializes a pair of scalar
+         * values.</summary>
+         *
+         * <param name="a">The first scalar value.</param>
+         * <param name="b">The second scalar value.</param>
+         */
+        internal FloatPair(float a, float b)
+        {
+            a_ = a;
+            b_ = b;
+        }
+
+        /**
+         * <summary>Returns true if the first pair of scalar values is less
+         * than the second pair of scalar values.</summary>
+         *
+         * <returns>True if the first pair of scalar values is less than the
+         * second pair of scalar values.</returns>
+         *
+         * <param name="pair1">The first pair of scalar values.</param>
+         * <param name="pair2">The second pair of scalar values.</param>
+         */
+        public static bool operator <(FloatPair pair1, FloatPair pair2)
+        {
+            return pair1.a_ < pair2.a_ || !(pair2.a_ < pair1.a_) && pair1.b_ < pair2.b_;
+        }
+
+        /**
+         * <summary>Returns true if the first pair of scalar values is less
+         * than or equal to the second pair of scalar values.</summary>
+         *
+         * <returns>True if the first pair of scalar values is less than or
+         * equal to the second pair of scalar values.</returns>
+         *
+         * <param name="pair1">The first pair of scalar values.</param>
+         * <param name="pair2">The second pair of scalar values.</param>
+         */
+        public static bool operator <=(FloatPair pair1, FloatPair pair2)
+        {
+            return (pair1.a_ == pair2.a_ && pair1.b_ == pair2.b_) || pair1 < pair2;
+        }
+
+        /**
+         * <summary>Returns true if the first pair of scalar values is
+         * greater than the second pair of scalar values.</summary>
+         *
+         * <returns>True if the first pair of scalar values is greater than
+         * the second pair of scalar values.</returns>
+         *
+         * <param name="pair1">The first pair of scalar values.</param>
+         * <param name="pair2">The second pair of scalar values.</param>
+         */
+        public static bool operator >(FloatPair pair1, FloatPair pair2)
+        {
+            return !(pair1 <= pair2);
+        }
+
+        /**
+         * <summary>Returns true if the first pair of scalar values is
+         * greater than or equal to the second pair of scalar values.
+         * </summary>
+         *
+         * <returns>True if the first pair of scalar values is greater than
+         * or equal to the second pair of scalar values.</returns>
+         *
+         * <param name="pair1">The first pair of scalar values.</param>
+         * <param name="pair2">The second pair of scalar values.</param>
+         */
+        public static bool operator >=(FloatPair pair1, FloatPair pair2)
+        {
+            return !(pair1 < pair2);
+        }
+    }
 
 
     public struct Pair : IComparer<Pair>, System.IEquatable<Pair>, System.IComparable<Pair>

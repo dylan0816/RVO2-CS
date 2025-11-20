@@ -1,9 +1,7 @@
 
 namespace RVO
 {
-    using System.Collections.Generic;
     using Unity.Collections;
-    using Unity.Mathematics;
 
     public static class KDRunntime
     {

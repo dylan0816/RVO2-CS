@@ -3,8 +3,6 @@
 namespace RVO
 {
     using Unity.Collections;
-    using System.Collections.Generic;
-    using Unity.Mathematics;
 
     public interface IRVOQuery
     {

@@ -1,12 +1,7 @@
 // #define RVOCS_MAX_HEAP
 using System;
-using System.Collections.Generic;
-using System.Security;
 using Unity.Collections;
 using Unity.Mathematics;
-using Unity.VisualScripting;
-using UnityEngine;
-using UnityEngine.UIElements;
 
 namespace RVO
 {
@@ -19,7 +14,7 @@ namespace RVO
         public UniformGrid() { }
         internal float cellsize_;
 
-        NativeMultiHashMap<int, int> gridCells;
+        NativeParallelMultiHashMap<int, int> gridCells;
 
         #region Obstacles Tree
         private int obstacleTreeNodeIdx_;
@@ -33,7 +28,7 @@ namespace RVO
         {
             return radians * 2.1f;
         }
-        public void Bind(float cellsize, ref NativeMultiHashMap<int, int> gridCells)
+        public void Bind(float cellsize, ref NativeParallelMultiHashMap<int, int> gridCells)
         {
             cellsize_ = cellsize;
             this.gridCells = gridCells;
@@ -45,6 +40,8 @@ namespace RVO
             for (int i = 0; i < agents.Length; i++)
             {
                 Agent agent = agents[i];
+                if (!agent.valid_) continue;
+
                 int cellX = (int)math.floor(agent.position_.x / cellsize_);
                 int cellY = (int)math.floor(agent.position_.y / cellsize_);
                 int cellId = getCellHashCode(ref cellX, ref cellY);
