@@ -41,16 +41,7 @@ using Unity.VisualScripting;
 namespace RVO
 {
 
-    /**
-         * <summary>Defines a node of an obstacle k-D tree.</summary>
-         */
-    public struct ObstacleTreeNode
-    {
-        public int idx;
-        internal int obstacleNo_;
-        internal int left_;
-        internal int right_;
-    };
+    
 
     /**
          * <summary>Defines a pair of scalar values.</summary>

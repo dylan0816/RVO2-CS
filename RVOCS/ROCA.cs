@@ -7,6 +7,18 @@ namespace RVO
     using Unity.Mathematics;
     using Unity.Collections;
 
+    /**
+         * <summary>Defines a node of an obstacle k-D tree.</summary>
+         */
+    public struct ObstacleTreeNode
+    {
+        public int idx;
+        internal int obstacleNo_;
+        internal int left_;
+        internal int right_;
+    };
+
+
     public struct Pair : IComparer<Pair>, System.IEquatable<Pair>, System.IComparable<Pair>
     {
         public static bool IDCompare = false;
