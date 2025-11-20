@@ -83,9 +83,9 @@ namespace RVO
              * Add agents, specifying their start position, and store their
              * goals on the opposite side of the environment.
              */
-            for (int i = 0; i < 13; ++i)
+            for (int i = 0; i < 7; ++i)
             {
-                for (int j = 0; j < 13; ++j)
+                for (int j = 0; j < 7; ++j)
                 {
                     Simulator.Instance.addAgent(new float2(55.0f + i * 10.0f, 55.0f + j * 10.0f));
                     goals.Add(new float2(-75.0f, -75.0f));
@@ -146,7 +146,7 @@ namespace RVO
              * simulation.
              */
 #if USED_GRID_RUNTIME
-            GridRuntime.processObstacles(Simulator.Instance);
+            UniformGridRuntime.processObstacles(Simulator.Instance);
 #else
             KDRunntime.processObstacles(Simulator.Instance);
 #endif
@@ -218,7 +218,7 @@ namespace RVO
 #endif
             setPreferredVelocities();
 #if USED_GRID_RUNTIME
-            GridRuntime.doStep(Simulator.Instance);
+            UniformGridRuntime.doStep(Simulator.Instance);
 #else
             KDRunntime.doStep(Simulator.Instance);
 #endif
@@ -264,7 +264,7 @@ namespace RVO
 
         private void OnDestroy()
         {
-            GridRuntime.Clear();
+            UniformGridRuntime.Clear();
             KDRunntime.Clear();
             Simulator.Instance.Clear();
             Simulator.Instance.Dispose();

@@ -55,7 +55,8 @@ namespace RVO
         internal float timeHorizonObst_;
 
         internal float2 newVelocity_;
-        internal bool valid_;
+        // internal bool valid_;
+        internal bool static_;
 
         public override bool Equals(object obj) => base.Equals(obj);
         public override int GetHashCode() => base.GetHashCode();

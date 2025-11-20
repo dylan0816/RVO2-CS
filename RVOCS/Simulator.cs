@@ -77,7 +77,7 @@ namespace RVO
          * <param name="position">The two-dimensional starting position of this
          * agent.</param>
          */
-        public int addAgent(float2 position)
+        public int addAgent(float2 position, bool static_ = false)
         {
             Agent agent = new Agent();
             agent.id_ = agents_.Length;
@@ -90,6 +90,7 @@ namespace RVO
             agent.timeHorizon_ = defaultAgent_.timeHorizon_;
             agent.timeHorizonObst_ = defaultAgent_.timeHorizonObst_;
             agent.velocity_ = defaultAgent_.velocity_;
+            agent.static_ = static_;
             agents_.Add(agent);
             return agent.id_;
         }
@@ -692,8 +693,11 @@ namespace RVO
         private bool disposedValue;
         public Simulator(int capacity = 128)
         {
-            UnityEngine.Debug.Log("Simulator created.");
+            UnityEngine.Debug.Log($"Simulator created. (capacity: {capacity})");
+            if (this.agents_.IsCreated) agents_.Dispose();
             this.agents_ = new NativeList<Agent>(capacity, Allocator.Persistent);
+
+            if (this.obstacles_.IsCreated) obstacles_.Dispose();
             this.obstacles_ = new NativeList<Obstacle>(capacity, Allocator.Persistent);
             this.Clear();
         }
@@ -715,14 +719,11 @@ namespace RVO
             {
                 if (disposing)
                 {
-                    // Managed state
                     this.Clear();
                 }
 
                 this.agents_.Dispose();
                 this.obstacles_.Dispose();
-
-                // Unmanaged resources
                 this.disposedValue = true;
             }
         }
@@ -733,7 +734,6 @@ namespace RVO
         public void Clear()
         {
             defaultAgent_ = new Agent() { id_ = -1 };
-            agents_.Clear();
 
             globalTime_ = 0.0f;
             timeStep_ = 0.1f;

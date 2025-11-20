@@ -34,7 +34,7 @@ namespace RVO
         static NativeList<Line> orcaLines;
         static NativeList<Line> projLines;
 
-        public static void Allocate(int capacity = 64)
+        public static void Allocate(int capacity = 128)
         {
             orcaLines = new NativeList<Line>(capacity, Allocator.Temp);
             projLines = new NativeList<Line>(capacity >> 1, Allocator.Temp);
@@ -42,7 +42,8 @@ namespace RVO
 
         public static void Deallocate()
         {
-
+            orcaLines.Dispose();
+            projLines.Dispose();
         }
 #else
         public static void Allocate(int capacity = 64) { }
@@ -117,7 +118,7 @@ namespace RVO
                 float radiusSq = RVOMath.sqr(agent.radius_);
 
                 float2 obstacleVector = obstacle2.point_ - obstacle1.point_;
-                float s = RVOMath.Mul(-relativePosition1, obstacleVector) / RVOMath.absSq(obstacleVector);
+                float s = math.mul(-relativePosition1, obstacleVector) / RVOMath.absSq(obstacleVector);
                 float distSqLine = RVOMath.absSq(-relativePosition1 - s * obstacleVector);
 
                 Line line;
@@ -128,7 +129,7 @@ namespace RVO
                     if (obstacle1.convex_)
                     {
                         line.point = new float2(0.0f, 0.0f);
-                        line.direction = RVOMath.normalize(new float2(-relativePosition1.y, relativePosition1.x));
+                        line.direction = math.normalize(new float2(-relativePosition1.y, relativePosition1.x));
                         orcaLines.Add(line);
                     }
 
@@ -143,7 +144,7 @@ namespace RVO
                     if (obstacle2.convex_ && RVOMath.det(relativePosition2, obstacle2.direction_) >= 0.0f)
                     {
                         line.point = new float2(0.0f, 0.0f);
-                        line.direction = RVOMath.normalize(new float2(-relativePosition2.y, relativePosition2.x));
+                        line.direction = math.normalize(new float2(-relativePosition2.y, relativePosition2.x));
                         orcaLines.Add(line);
                     }
 
@@ -261,14 +262,14 @@ namespace RVO
                 /* Project current velocity on velocity obstacle. */
 
                 /* Check if current velocity is projected on cutoff circles. */
-                float t = obstacle1 == obstacle2 ? 0.5f : RVOMath.Mul(velocity_ - leftCutOff, cutOffVector) / RVOMath.absSq(cutOffVector);
-                float tLeft = RVOMath.Mul(velocity_ - leftCutOff, leftLegDirection);
-                float tRight = RVOMath.Mul(velocity_ - rightCutOff, rightLegDirection);
+                float t = obstacle1 == obstacle2 ? 0.5f : math.mul(velocity_ - leftCutOff, cutOffVector) / RVOMath.absSq(cutOffVector);
+                float tLeft = math.mul(velocity_ - leftCutOff, leftLegDirection);
+                float tRight = math.mul(velocity_ - rightCutOff, rightLegDirection);
 
                 if ((t < 0.0f && tLeft < 0.0f) || (obstacle1 == obstacle2 && tLeft < 0.0f && tRight < 0.0f))
                 {
                     /* Project on left cut-off circle. */
-                    float2 unitW = RVOMath.normalize(velocity_ - leftCutOff);
+                    float2 unitW = math.normalize(velocity_ - leftCutOff);
 
                     line.direction = new float2(unitW.y, -unitW.x);
                     line.point = leftCutOff + radius_ * invTimeHorizonObst * unitW;
@@ -279,7 +280,7 @@ namespace RVO
                 else if (t > 1.0f && tRight < 0.0f)
                 {
                     /* Project on right cut-off circle. */
-                    float2 unitW = RVOMath.normalize(velocity_ - rightCutOff);
+                    float2 unitW = math.normalize(velocity_ - rightCutOff);
 
                     line.direction = new float2(unitW.y, -unitW.x);
                     line.point = rightCutOff + radius_ * invTimeHorizonObst * unitW;
@@ -363,7 +364,7 @@ namespace RVO
 
                     /* Vector from cutoff center to relative velocity. */
                     float wLengthSq = RVOMath.absSq(w);
-                    float dotProduct1 = RVOMath.Mul(w, relativePosition);
+                    float dotProduct1 = math.mul(w, relativePosition);
 
                     if (dotProduct1 < 0.0f && RVOMath.sqr(dotProduct1) > combinedRadiusSq * wLengthSq)
                     {
@@ -390,7 +391,7 @@ namespace RVO
                             line.direction = -new float2(relativePosition.x * leg + relativePosition.y * combinedRadius, -relativePosition.x * combinedRadius + relativePosition.y * leg) / distSq;
                         }
 
-                        float dotProduct2 = RVOMath.Mul(relativeVelocity, line.direction);
+                        float dotProduct2 = math.mul(relativeVelocity, line.direction);
                         u = dotProduct2 * line.direction - relativeVelocity;
                     }
                 }
@@ -464,7 +465,7 @@ namespace RVO
             else if (RVOMath.absSq(optVelocity) > RVOMath.sqr(radius))
             {
                 /* Optimize closest point and outside circle. */
-                result = RVOMath.normalize(optVelocity) * radius;
+                result = math.normalize(optVelocity) * radius;
             }
             else
             {
@@ -527,10 +528,10 @@ namespace RVO
 
                         float determinant = RVOMath.det(lines[i].direction, lines[j].direction);
 
-                        if (RVOMath.fabs(determinant) <= RVOMath.RVO_EPSILON)
+                        if (math.abs(determinant) <= RVOMath.RVO_EPSILON)
                         {
                             /* Line i and line j are parallel. */
-                            if (RVOMath.Mul(lines[i].direction, lines[j].direction) > 0.0f)
+                            if (math.mul(lines[i].direction, lines[j].direction) > 0.0f)
                             {
                                 /* Line i and line j point in the same direction. */
                                 continue;
@@ -546,7 +547,7 @@ namespace RVO
                             line.point = lines[i].point + (RVOMath.det(lines[j].direction, lines[i].point - lines[j].point) / determinant) * lines[i].direction;
                         }
 
-                        line.direction = RVOMath.normalize(lines[j].direction - lines[i].direction);
+                        line.direction = math.normalize(lines[j].direction - lines[i].direction);
                         projLines.Add(line);
                     }
 
@@ -591,7 +592,7 @@ namespace RVO
          */
         private static bool linearProgram1(in NativeList<Line> lines, int lineNo, float radius, float2 optVelocity, bool directionOpt, ref float2 result)
         {
-            float dotProduct = RVOMath.Mul(lines[lineNo].point, lines[lineNo].direction);
+            float dotProduct = math.mul(lines[lineNo].point, lines[lineNo].direction);
             float discriminant = RVOMath.sqr(dotProduct) + RVOMath.sqr(radius) - RVOMath.absSq(lines[lineNo].point);
 
             if (discriminant < 0.0f)
@@ -609,7 +610,7 @@ namespace RVO
                 float denominator = RVOMath.det(lines[lineNo].direction, lines[i].direction);
                 float numerator = RVOMath.det(lines[i].direction, lines[lineNo].point - lines[i].point);
 
-                if (RVOMath.fabs(denominator) <= RVOMath.RVO_EPSILON)
+                if (math.abs(denominator) <= RVOMath.RVO_EPSILON)
                 {
                     /* Lines lineNo and i are (almost) parallel. */
                     if (numerator < 0.0f)
@@ -642,7 +643,7 @@ namespace RVO
             if (directionOpt)
             {
                 /* Optimize direction. */
-                if (RVOMath.Mul(optVelocity, lines[lineNo].direction) > 0.0f)
+                if (math.mul(optVelocity, lines[lineNo].direction) > 0.0f)
                 {
                     /* Take right extreme. */
                     result = lines[lineNo].point + tRight * lines[lineNo].direction;
@@ -656,7 +657,7 @@ namespace RVO
             else
             {
                 /* Optimize closest point. */
-                float t = RVOMath.Mul(lines[lineNo].direction, (optVelocity - lines[lineNo].point));
+                float t = math.mul(lines[lineNo].direction, (optVelocity - lines[lineNo].point));
 
                 if (t < tLeft)
                 {

@@ -139,19 +139,6 @@ namespace RVO
         }
 
         /**
-         * <summary>Computes the absolute value of a float.</summary>
-         *
-         * <returns>The absolute value of the float.</returns>
-         *
-         * <param name="scalar">The float of which to compute the absolute
-         * value.</param>
-         */
-        internal static float fabs(float scalar)
-        {
-            return Math.Abs(scalar);
-        }
-
-        /**
          * <summary>Computes the signed distance from a line connecting the
          * specified points to a specified point.</summary>
          *
@@ -191,11 +178,6 @@ namespace RVO
         internal static float sqrt(float scalar)
         {
             return (float)math.sqrt(scalar);
-        }
-
-        internal static float Mul(float2 vector1, float2 vector2)
-        {
-            return vector1.x * vector2.x + vector1.y * vector2.y;
         }
     }
 }

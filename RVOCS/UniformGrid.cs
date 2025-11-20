@@ -13,13 +13,12 @@ namespace RVO
     /**
      * <summary>Kd-tree for agents and obstacles.</summary>
      */
-    public class GridTree : IRVOQuery, IDisposable
+    public class UniformGrid : IRVOQuery, IDisposable
     {
         const int MAX_LEAF_SIZE = 10;
-        public GridTree() { }
+        public UniformGrid() { }
         internal float cellsize_;
 
-        NativeArray<int> dirs;
         NativeMultiHashMap<int, int> gridCells;
 
         #region Obstacles Tree
@@ -36,16 +35,6 @@ namespace RVO
         }
         public void Bind(float cellsize, ref NativeMultiHashMap<int, int> gridCells)
         {
-            if (!dirs.IsCreated)
-            {
-                dirs = new NativeArray<int>(new int[] {
-                    -1, 0, 1, 0,
-                    0, -1, 0, 1,
-                    -1, -1, 1, 1,
-                    -1, 1, 1, -1
-                    }, Allocator.Persistent);
-            }
-
             cellsize_ = cellsize;
             this.gridCells = gridCells;
         }
@@ -68,7 +57,13 @@ namespace RVO
             NativeArray<int> obstacleIds = new NativeArray<int>(obstacles.Length, Allocator.Temp);
             for (int i = 0; i < obstacles.Length; ++i) obstacleIds[i] = obstacles[i].id_;
 
-            obstacleTreeNodes_ = new NativeArray<ObstacleTreeNode>(obstacles.Length, Allocator.Persistent);
+            if (!obstacleTreeNodes_.IsCreated) obstacleTreeNodes_ = new NativeArray<ObstacleTreeNode>(obstacles.Length, Allocator.Persistent);
+            else if (obstacleTreeNodes_.Length != obstacles.Length)
+            {
+                obstacleTreeNodes_.Dispose();
+                obstacleTreeNodes_ = new NativeArray<ObstacleTreeNode>(obstacles.Length, Allocator.Persistent);
+            }
+
             obstacleTreeNodeIdx_ = buildObstacleTreeRecursive(in obstacleIds, ref obstacles, ref obstacleTreeNodes_);
             obstacleIds.Dispose();
         }
@@ -76,7 +71,6 @@ namespace RVO
 
         public void computeAgentNeighbors(in Agent agent, in NativeArray<Agent> agents, ref float rangeSq, ref NativeList<Pair> agentNeighbors)
         {
-
             agentNeighbors.Clear();
             int maxNeighbors = agent.maxNeighbors_;
             float neighborDistSq = agent.neighborDist_ * agent.neighborDist_;
@@ -368,22 +362,19 @@ namespace RVO
             maxheap.Dispose();
 #endif
         }
-        public void Dispose()
-        {
-            this.Dispose(true);
-        }
+
+        ~UniformGrid() => this.Dispose(false);
+        public void Dispose() => this.Dispose(true);
+
         private void Dispose(bool disposing)
         {
             if (!this.disposedValue)
             {
                 if (disposing)
                 {
-                    // Managed state
                     this.Clear();
                 }
-                dirs.Dispose();
                 obstacleTreeNodes_.Dispose();
-                // Unmanaged resources
                 this.disposedValue = true;
             }
         }

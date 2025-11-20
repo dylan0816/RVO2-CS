@@ -1,19 +1,16 @@
-#define OPEN_PROFILER
+// #define OPEN_PROFILER
 
 namespace RVO
 {
-    using System.Collections.Generic;
     using Unity.Collections;
-    using Unity.Mathematics;
-    using UnityEngine;
 
-    public static class GridRuntime
+    public static class UniformGridRuntime
     {
-        internal static GridTree tree;
+        internal static UniformGrid tree;
 
         public static void processObstacles(Simulator simulator)
         {
-            if (tree == null) tree = new GridTree();
+            if (tree == null) tree = new UniformGrid();
             tree.buildObstacleTree(ref simulator.obstacles_);
         }
 
@@ -25,7 +22,7 @@ namespace RVO
          */
         internal static float doStep(Simulator simulator)
         {
-            if (tree == null) tree = new GridTree();
+            if (tree == null) tree = new UniformGrid();
 
             int agentCount = simulator.agents_.Length;
 
@@ -46,13 +43,17 @@ namespace RVO
             for (int i = 0; i < agentsReadOnly.Length; ++i) agentsReadOnly[i] = simulator.agents_[i];
             tree.Bind(tree.CalculateCellSize(simulator.getAgentRadius(), simulator.getAgentNeighborDist()), ref agentTreeReadOnly_);
             tree.buildAgentTree(ref agentsReadOnly);
+
+#if OPEN_PROFILER
             UnityEngine.Profiling.Profiler.EndSample();
+#endif
 
             // 避障计算
             ROCA.Allocate();
             for (int agentNo = 0; agentNo < agentCount; ++agentNo)
             {
                 Agent agent = simulator.agents_[agentNo];
+                if (agent.static_) continue;
 
                 // 查找 邻居
                 obstacleNeighbors.Clear();
