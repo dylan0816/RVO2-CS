@@ -38,7 +38,7 @@ namespace RVO
     /**
      * <summary>Defines static obstacles in the simulation.</summary>
      */
-    internal struct Obstacle : IEquatable<Obstacle>
+    public struct Obstacle : IEquatable<Obstacle>
     {
         internal int next_;
         internal int previous_;

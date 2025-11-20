@@ -36,14 +36,110 @@ using System.Collections.Generic;
 using System.Security;
 using Unity.Collections;
 using Unity.Mathematics;
+using Unity.VisualScripting;
 
 namespace RVO
 {
+
+    /**
+         * <summary>Defines a node of an obstacle k-D tree.</summary>
+         */
+    public struct ObstacleTreeNode
+    {
+        public int idx;
+        internal int obstacleNo_;
+        internal int left_;
+        internal int right_;
+    };
+
+    /**
+         * <summary>Defines a pair of scalar values.</summary>
+         */
+    public struct FloatPair
+    {
+        private readonly float a_;
+        private readonly float b_;
+
+        /**
+         * <summary>Constructs and initializes a pair of scalar
+         * values.</summary>
+         *
+         * <param name="a">The first scalar value.</param>
+         * <param name="b">The second scalar value.</param>
+         */
+        internal FloatPair(float a, float b)
+        {
+            a_ = a;
+            b_ = b;
+        }
+
+        /**
+         * <summary>Returns true if the first pair of scalar values is less
+         * than the second pair of scalar values.</summary>
+         *
+         * <returns>True if the first pair of scalar values is less than the
+         * second pair of scalar values.</returns>
+         *
+         * <param name="pair1">The first pair of scalar values.</param>
+         * <param name="pair2">The second pair of scalar values.</param>
+         */
+        public static bool operator <(FloatPair pair1, FloatPair pair2)
+        {
+            return pair1.a_ < pair2.a_ || !(pair2.a_ < pair1.a_) && pair1.b_ < pair2.b_;
+        }
+
+        /**
+         * <summary>Returns true if the first pair of scalar values is less
+         * than or equal to the second pair of scalar values.</summary>
+         *
+         * <returns>True if the first pair of scalar values is less than or
+         * equal to the second pair of scalar values.</returns>
+         *
+         * <param name="pair1">The first pair of scalar values.</param>
+         * <param name="pair2">The second pair of scalar values.</param>
+         */
+        public static bool operator <=(FloatPair pair1, FloatPair pair2)
+        {
+            return (pair1.a_ == pair2.a_ && pair1.b_ == pair2.b_) || pair1 < pair2;
+        }
+
+        /**
+         * <summary>Returns true if the first pair of scalar values is
+         * greater than the second pair of scalar values.</summary>
+         *
+         * <returns>True if the first pair of scalar values is greater than
+         * the second pair of scalar values.</returns>
+         *
+         * <param name="pair1">The first pair of scalar values.</param>
+         * <param name="pair2">The second pair of scalar values.</param>
+         */
+        public static bool operator >(FloatPair pair1, FloatPair pair2)
+        {
+            return !(pair1 <= pair2);
+        }
+
+        /**
+         * <summary>Returns true if the first pair of scalar values is
+         * greater than or equal to the second pair of scalar values.
+         * </summary>
+         *
+         * <returns>True if the first pair of scalar values is greater than
+         * or equal to the second pair of scalar values.</returns>
+         *
+         * <param name="pair1">The first pair of scalar values.</param>
+         * <param name="pair2">The second pair of scalar values.</param>
+         */
+        public static bool operator >=(FloatPair pair1, FloatPair pair2)
+        {
+            return !(pair1 < pair2);
+        }
+    }
+
     /**
      * <summary>Defines k-D trees for agents and static obstacles in the
      * simulation.</summary>
      */
-    internal class KdTree
+    internal class KdTree : IRVOQuery
     {
         /**
          * <summary>Defines a node of an agent k-D tree.</summary>
@@ -60,146 +156,42 @@ namespace RVO
             internal float minY_;
         }
 
-        /**
-         * <summary>Defines a pair of scalar values.</summary>
-         */
-        private struct FloatPair
-        {
-            private readonly float a_;
-            private readonly float b_;
 
-            /**
-             * <summary>Constructs and initializes a pair of scalar
-             * values.</summary>
-             *
-             * <param name="a">The first scalar value.</param>
-             * <param name="b">The second scalar value.</param>
-             */
-            internal FloatPair(float a, float b)
-            {
-                a_ = a;
-                b_ = b;
-            }
 
-            /**
-             * <summary>Returns true if the first pair of scalar values is less
-             * than the second pair of scalar values.</summary>
-             *
-             * <returns>True if the first pair of scalar values is less than the
-             * second pair of scalar values.</returns>
-             *
-             * <param name="pair1">The first pair of scalar values.</param>
-             * <param name="pair2">The second pair of scalar values.</param>
-             */
-            public static bool operator <(FloatPair pair1, FloatPair pair2)
-            {
-                return pair1.a_ < pair2.a_ || !(pair2.a_ < pair1.a_) && pair1.b_ < pair2.b_;
-            }
 
-            /**
-             * <summary>Returns true if the first pair of scalar values is less
-             * than or equal to the second pair of scalar values.</summary>
-             *
-             * <returns>True if the first pair of scalar values is less than or
-             * equal to the second pair of scalar values.</returns>
-             *
-             * <param name="pair1">The first pair of scalar values.</param>
-             * <param name="pair2">The second pair of scalar values.</param>
-             */
-            public static bool operator <=(FloatPair pair1, FloatPair pair2)
-            {
-                return (pair1.a_ == pair2.a_ && pair1.b_ == pair2.b_) || pair1 < pair2;
-            }
-
-            /**
-             * <summary>Returns true if the first pair of scalar values is
-             * greater than the second pair of scalar values.</summary>
-             *
-             * <returns>True if the first pair of scalar values is greater than
-             * the second pair of scalar values.</returns>
-             *
-             * <param name="pair1">The first pair of scalar values.</param>
-             * <param name="pair2">The second pair of scalar values.</param>
-             */
-            public static bool operator >(FloatPair pair1, FloatPair pair2)
-            {
-                return !(pair1 <= pair2);
-            }
-
-            /**
-             * <summary>Returns true if the first pair of scalar values is
-             * greater than or equal to the second pair of scalar values.
-             * </summary>
-             *
-             * <returns>True if the first pair of scalar values is greater than
-             * or equal to the second pair of scalar values.</returns>
-             *
-             * <param name="pair1">The first pair of scalar values.</param>
-             * <param name="pair2">The second pair of scalar values.</param>
-             */
-            public static bool operator >=(FloatPair pair1, FloatPair pair2)
-            {
-                return !(pair1 < pair2);
-            }
-        }
-
-        /**
-         * <summary>Defines a node of an obstacle k-D tree.</summary>
-         */
-        private struct ObstacleTreeNode
-        {
-            public int idx;
-            internal int obstacleNo_;
-            internal int left_;
-            internal int right_;
-        };
 
         /**
          * <summary>The maximum size of an agent k-D tree leaf.</summary>
          */
         private const int MAX_LEAF_SIZE = 10;
 
-        private NativeArray<Agent> agents_;
-        // private NativeArray<AgentTreeNode> agentTree_;
+        NativeArray<AgentTreeNode> agentTree;
 
         #region Obstacles Tree
         private int obstacleTreeNodeIdx_;
         private NativeArray<ObstacleTreeNode> obstacleTreeNodes_;
         #endregion
 
-        /**
-         * <summary>Builds an agent k-D tree.</summary>
-         */
-        internal void buildAgentTree(ref NativeArray<AgentTreeNode> agentTree, ref NativeArray<Agent> agents)
+        public void Bind(ref NativeArray<AgentTreeNode> agentTree)
         {
-            Simulator simulator = Simulator.Instance;
-            // if (agents_ == null || agents_.Length != simulator.agents_.Count)
-            // {
-            //     agents_ = new NativeArray<Agent>(simulator.agents_.Count, Allocator.Persistent);
-
-            // }
-
-            for (int i = 0; i < agents.Length; ++i)
-                agents[i] = simulator.agents_[i];
-
-            if (agents.Length != 0)
-            {
-                buildAgentTreeRecursive(ref agentTree, ref agents, 0, agents_.Length, 0);
-            }
+            this.agentTree = agentTree;
         }
 
-        /**
-         * <summary>Builds an obstacle k-D tree.</summary>
-         */
-        internal void buildObstacleTree(Simulator simulator)
+        public void buildAgentTree(ref NativeArray<Agent> agents)
         {
-            NativeArray<int> obstacleIds = new NativeArray<int>(simulator.obstacles_.Length, Allocator.Temp);
-            for (int i = 0; i < simulator.obstacles_.Length; ++i) obstacleIds[i] = simulator.obstacles_[i].id_;
+            buildAgentTreeRecursive(ref agentTree, ref agents, 0, agents.Length, 0);
+        }
 
-            obstacleTreeNodes_ = new NativeArray<ObstacleTreeNode>(simulator.obstacles_.Length, Allocator.Persistent);
-            obstacleTreeNodeIdx_ = buildObstacleTreeRecursive(simulator, in obstacleIds, ref simulator.obstacles_, ref obstacleTreeNodes_);
+        public void buildObstacleTree(ref NativeList<Obstacle> obstacles)
+        {
+            NativeArray<int> obstacleIds = new NativeArray<int>(obstacles.Length, Allocator.Temp);
+            for (int i = 0; i < obstacles.Length; ++i) obstacleIds[i] = obstacles[i].id_;
+
+            obstacleTreeNodes_ = new NativeArray<ObstacleTreeNode>(obstacles.Length, Allocator.Persistent);
+            obstacleTreeNodeIdx_ = buildObstacleTreeRecursive(in obstacleIds, ref obstacles, ref obstacleTreeNodes_);
             obstacleIds.Dispose();
         }
+        // void buildAgentTree(ref NativeList<Agent> agents);
 
         /**
          * <summary>Computes the agent neighbors of the specified agent.
@@ -209,7 +201,7 @@ namespace RVO
          * computed.</param>
          * <param name="rangeSq">The squared range around the agent.</param>
          */
-        internal void computeAgentNeighbors(in Agent agent, in NativeArray<AgentTreeNode> agentTree, in NativeArray<Agent> agents, ref float rangeSq, ref NativeList<KeyValuePair<float, int>> agentNeighbors)
+        public void computeAgentNeighbors(in Agent agent, in NativeArray<Agent> agents, ref float rangeSq, ref NativeList<Pair> agentNeighbors)
         {
             queryAgentTreeRecursive(in agent, in agentTree, in agents, ref rangeSq, 0, ref agentNeighbors);
         }
@@ -222,7 +214,7 @@ namespace RVO
          * computed.</param>
          * <param name="rangeSq">The squared range around the agent.</param>
          */
-        internal void computeObstacleNeighbors(ref Agent agent, float rangeSq, in NativeList<Obstacle> obstacles, ref NativeList<KeyValuePair<float, int>> obstacleNeighbors)
+        public void computeObstacleNeighbors(ref Agent agent, in NativeList<Obstacle> obstacles, float rangeSq, ref NativeList<Pair> obstacleNeighbors)
         {
             queryObstacleTreeRecursive(ref agent, rangeSq, obstacleTreeNodeIdx_, obstacles, ref obstacleNeighbors);
         }
@@ -327,7 +319,7 @@ namespace RVO
          *
          * <param name="obstacles">A list of obstacles.</param>
          */
-        private int buildObstacleTreeRecursive(Simulator simulator, in NativeArray<int> obstacleIds, ref NativeList<Obstacle> obstacles, ref NativeArray<ObstacleTreeNode> obstacleTreeNodes)
+        private int buildObstacleTreeRecursive(in NativeArray<int> obstacleIds, ref NativeList<Obstacle> obstacles, ref NativeArray<ObstacleTreeNode> obstacleTreeNodes)
         {
             if (obstacleIds.Length == 0 || !obstacleIds.IsCreated)
             {
@@ -470,11 +462,12 @@ namespace RVO
                             rightObstacles[rightCounter++] = obstacleJ1.id_;
                             leftObstacles[leftCounter++] = newObstacle.id_;
                         }
+                        UnityEngine.Debug.Log("Split obstacle " + obstacleJ1.id_ + " into " + obstacleJ1.id_ + " and " + newObstacle.id_);
                     }
                 }
                 node.obstacleNo_ = obstacleI1.id_;
-                node.left_ = buildObstacleTreeRecursive(simulator, in leftObstacles, ref obstacles, ref obstacleTreeNodes);
-                node.right_ = buildObstacleTreeRecursive(simulator, in rightObstacles, ref obstacles, ref obstacleTreeNodes);
+                node.left_ = buildObstacleTreeRecursive(in leftObstacles, ref obstacles, ref obstacleTreeNodes);
+                node.right_ = buildObstacleTreeRecursive(in rightObstacles, ref obstacles, ref obstacleTreeNodes);
 
                 leftObstacles.Dispose();
                 rightObstacles.Dispose();
@@ -493,7 +486,7 @@ namespace RVO
          * <param name="rangeSq">The squared range around the agent.</param>
          * <param name="node">The current agent k-D tree node index.</param>
          */
-        private void queryAgentTreeRecursive(in Agent agent, in NativeArray<AgentTreeNode> agentTree, in NativeArray<Agent> agents, ref float rangeSq, int node, ref NativeList<KeyValuePair<float, int>> agentNeighbors)
+        private void queryAgentTreeRecursive(in Agent agent, in NativeArray<AgentTreeNode> agentTree, in NativeArray<Agent> agents, ref float rangeSq, int node, ref NativeList<Pair> agentNeighbors)
         {
             if (agentTree[node].end_ - agentTree[node].begin_ <= MAX_LEAF_SIZE)
             {
@@ -551,7 +544,7 @@ namespace RVO
          * <param name="rangeSq">The squared range around the agent.</param>
          * <param name="node">The current obstacle k-D node.</param>
          */
-        private void queryObstacleTreeRecursive(ref Agent agent, float rangeSq, int nodeIndex, in NativeList<Obstacle> obstacles, ref NativeList<KeyValuePair<float, int>> obstacleNeighbors)
+        private void queryObstacleTreeRecursive(ref Agent agent, float rangeSq, int nodeIndex, in NativeList<Obstacle> obstacles, ref NativeList<Pair> obstacleNeighbors)
         {
             if (nodeIndex < 0) return;
             ObstacleTreeNode node = obstacleTreeNodes_[nodeIndex];
@@ -631,13 +624,11 @@ namespace RVO
             return point1LeftOfQ * point2LeftOfQ >= 0.0f && RVOMath.sqr(point1LeftOfQ) * invLengthQ > RVOMath.sqr(radius) && RVOMath.sqr(point2LeftOfQ) * invLengthQ > RVOMath.sqr(radius) && queryVisibilityRecursive(q1, q2, radius, node.left_, in obstacles) && queryVisibilityRecursive(q1, q2, radius, node.right_, in obstacles);
         }
 
-        internal void Clear()
+        public void Clear()
         {
             // if (agents_ != null) Array.Clear(agents_, 0, agents_.Length);
             // if (agentTree_ != null) Array.Clear(agentTree_, 0, agentTree_.Length);
 
-            // if (agentTree_.IsCreated) agentTree_.Dispose();
-            if (agents_.IsCreated) agents_.Dispose();
             if (obstacleTreeNodes_.IsCreated) obstacleTreeNodes_.Dispose();
 
             // this.agentIds.Resize(0);
@@ -652,7 +643,7 @@ namespace RVO
          * <param name="agent">A pointer to the agent to be inserted.</param>
          * <param name="rangeSq">The squared range around this agent.</param>
          */
-        internal static void insertAgentNeighbor(in Agent agent, int agentNo, float2 position, ref float rangeSq, ref NativeList<KeyValuePair<float, int>> agentNeighbors)
+        internal static void insertAgentNeighbor(in Agent agent, int agentNo, float2 position, ref float rangeSq, ref NativeList<Pair> agentNeighbors)
         {
             if (agent.id_ != agentNo)
             {
@@ -662,22 +653,22 @@ namespace RVO
                 {
                     if (agentNeighbors.Length < agent.maxNeighbors_)
                     {
-                        agentNeighbors.Add(new KeyValuePair<float, int>(distSq, agentNo));
+                        agentNeighbors.Add(new Pair(distSq, agentNo));
                     }
 
                     int i = agentNeighbors.Length - 1;
 
-                    while (i != 0 && distSq < agentNeighbors[i - 1].Key)
+                    while (i != 0 && distSq < agentNeighbors[i - 1].distSq)
                     {
                         agentNeighbors[i] = agentNeighbors[i - 1];
                         --i;
                     }
 
-                    agentNeighbors[i] = new KeyValuePair<float, int>(distSq, agentNo);
+                    agentNeighbors[i] = new Pair(distSq, agentNo);
 
                     if (agentNeighbors.Length == agent.maxNeighbors_)
                     {
-                        rangeSq = agentNeighbors[agentNeighbors.Length - 1].Key;
+                        rangeSq = agentNeighbors[agentNeighbors.Length - 1].distSq;
                     }
                 }
             }
@@ -691,7 +682,7 @@ namespace RVO
          * inserted.</param>
          * <param name="rangeSq">The squared range around this agent.</param>
          */
-        internal static void insertObstacleNeighbor(float2 position, int obstacleNo, in NativeList<Obstacle> obstacles, float rangeSq, ref NativeList<KeyValuePair<float, int>> obstacleNeighbors)
+        internal static void insertObstacleNeighbor(float2 position, int obstacleNo, in NativeList<Obstacle> obstacles, float rangeSq, ref NativeList<Pair> obstacleNeighbors)
         {
             Obstacle obstacle = obstacles[obstacleNo];
             Obstacle nextObstacle = obstacles[obstacle.next_];
@@ -700,17 +691,19 @@ namespace RVO
 
             if (distSq < rangeSq)
             {
-                obstacleNeighbors.Add(new KeyValuePair<float, int>(distSq, obstacleNo));
+                obstacleNeighbors.Add(new Pair(distSq, obstacleNo));
 
                 int i = obstacleNeighbors.Length - 1;
 
-                while (i != 0 && distSq < obstacleNeighbors[i - 1].Key)
+                while (i != 0 && distSq < obstacleNeighbors[i - 1].distSq)
                 {
                     obstacleNeighbors[i] = obstacleNeighbors[i - 1];
                     --i;
                 }
-                obstacleNeighbors[i] = new KeyValuePair<float, int>(distSq, obstacleNo);
+                obstacleNeighbors[i] = new Pair(distSq, obstacleNo);
             }
         }
+
+
     }
 }

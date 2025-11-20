@@ -41,7 +41,7 @@ namespace RVO
     /**
      * <summary>Defines an agent in the simulation.</summary>
      */
-    internal struct Agent : IEquatable<Agent>
+    public struct Agent : IEquatable<Agent>
     {
         internal float2 position_;
         internal float2 prefVelocity_;
@@ -55,6 +55,7 @@ namespace RVO
         internal float timeHorizonObst_;
 
         internal float2 newVelocity_;
+        internal bool valid_;
 
         public override bool Equals(object obj) => base.Equals(obj);
         public override int GetHashCode() => base.GetHashCode();
@@ -66,10 +67,11 @@ namespace RVO
          * <summary>Updates the two-dimensional position and two-dimensional
          * velocity of this agent.</summary>
          */
-        internal void update()
+        internal Agent update(Simulator simulator)
         {
             velocity_ = newVelocity_;
-            position_ += velocity_ * Simulator.Instance.timeStep_;
+            position_ += velocity_ * simulator.timeStep_;
+            return this;
         }
 
     }

@@ -21,7 +21,7 @@ namespace RVO
          * <param name="agentNeighbors">The neighboring agents of the agent.
          * </param>
          */
-        internal static void computeNewVelocity(ref Agent agent, in IList<Agent> agents, in NativeList<Obstacle> obstacles, in NativeList<KeyValuePair<float, int>> obstacleNeighbors, in NativeList<KeyValuePair<float, int>> agentNeighbors)
+        public static void computeNewVelocity(ref Agent agent, in NativeList<Agent> agents, in NativeList<Obstacle> obstacles, in NativeList<Pair> obstacleNeighbors, in NativeList<Pair> agentNeighbors)
         {
             var orcaLines = new NativeList<Line>(16, Allocator.Temp);
             float radius_ = agent.radius_;
@@ -30,11 +30,12 @@ namespace RVO
             float2 velocity_ = agent.velocity_;
             float2 position_ = agent.position_;
 
+            UnityEngine.Profiling.Profiler.BeginSample("[RVO] ROCA.computeNewVelocity - create obstacle ORCA lines");
             /* Create obstacle ORCA lines. */
             for (int i = 0; i < obstacleNeighbors.Length; ++i)
             {
 
-                Obstacle obstacle1 = obstacles[obstacleNeighbors[i].Value];
+                Obstacle obstacle1 = obstacles[obstacleNeighbors[i].id];
                 Obstacle obstacle2 = obstacles[obstacle1.next_];
 
                 float2 relativePosition1 = obstacle1.point_ - agent.position_;
@@ -284,14 +285,20 @@ namespace RVO
                 orcaLines.Add(line);
             }
 
+            UnityEngine.Profiling.Profiler.EndSample();
+
+            UnityEngine.Profiling.Profiler.BeginSample("[RVO] ROCA.computeNewVelocity - create agent ORCA lines");
+
             int numObstLines = orcaLines.Length;
 
             float invTimeHorizon = 1.0f / agent.timeHorizon_;
-
+            /* Collision. Project on cut-off circle of time timeStep. */
+            float invTimeStep = 1.0f / Simulator.Instance.timeStep_;
+            
             /* Create agent ORCA lines. */
             for (int i = 0; i < agentNeighbors.Length; ++i)
             {
-                Agent other = agents[agentNeighbors[i].Value];
+                Agent other = agents[agentNeighbors[i].id];
 
                 float2 relativePosition = other.position_ - position_;
                 float2 relativeVelocity = velocity_ - other.velocity_;
@@ -342,8 +349,7 @@ namespace RVO
                 }
                 else
                 {
-                    /* Collision. Project on cut-off circle of time timeStep. */
-                    float invTimeStep = 1.0f / Simulator.Instance.timeStep_;
+
 
                     /* Vector from cutoff center to relative velocity. */
                     float2 w = relativeVelocity - invTimeStep * relativePosition;
@@ -360,6 +366,7 @@ namespace RVO
                 orcaLines.Add(line);
             }
 
+            UnityEngine.Profiling.Profiler.BeginSample("[RVO] ROCA.computeNewVelocity - linearProgram2/3");
             float2 newVelocity__ = agent.newVelocity_;
             int lineFail = linearProgram2(in orcaLines, agent.maxSpeed_, agent.prefVelocity_, false, ref newVelocity__);
 
@@ -369,6 +376,9 @@ namespace RVO
             }
             // UnityEngine.Debug.Log($"id: {agent.id_} cur vel:{velocity_} new vel: {agent.newVelocity_} to {newVelocity__} agentNeighbors:{agentNeighbors.Length} this.{agent.newVelocity_} {agent.velocity_} {orcaLines.Length}");
             agent.newVelocity_ = newVelocity__;
+            UnityEngine.Profiling.Profiler.EndSample();
+
+            UnityEngine.Profiling.Profiler.EndSample();
 
             orcaLines.Dispose();
         }

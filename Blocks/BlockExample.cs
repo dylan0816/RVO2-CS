@@ -40,10 +40,12 @@
 
 #define RVOCS_OUTPUT_TIME_AND_POSITIONS
 #define RVOCS_SEED_RANDOM_NUMBER_GENERATOR
+#define USED_GRID_RUNTIME
 
 using System;
 using System.Collections.Generic;
 using Unity.Mathematics;
+using Unity.VisualScripting;
 using UnityEngine;
 using Random = System.Random;
 
@@ -77,15 +79,15 @@ namespace RVO
              * Specify the default parameters for agents that are subsequently
              * added.
              */
-            Simulator.Instance.setAgentDefaults(15.0f, 10, 5.0f, 5.0f, 2.0f, 2.0f, new float2(0.0f, 0.0f));
+            Simulator.Instance.setAgentDefaults(15.0f, 3, 5.0f, 5.0f, 2.0f, 1f, new float2(0.0f, 0.0f));
 
             /*
              * Add agents, specifying their start position, and store their
              * goals on the opposite side of the environment.
              */
-            for (int i = 0; i < 10; ++i)
+            for (int i = 0; i < 15; ++i)
             {
-                for (int j = 0; j < 10; ++j)
+                for (int j = 0; j < 15; ++j)
                 {
                     Simulator.Instance.addAgent(new float2(55.0f + i * 10.0f, 55.0f + j * 10.0f));
                     goals.Add(new float2(-75.0f, -75.0f));
@@ -145,7 +147,11 @@ namespace RVO
              * Process the obstacles so that they are accounted for in the
              * simulation.
              */
-            Simulator.Instance.processObstacles();
+#if USED_GRID_RUNTIME
+            GridRuntime.processObstacles(Simulator.Instance);
+#else
+            KDRunntime.processObstacles(Simulator.Instance);
+#endif
         }
 
 #if RVOCS_OUTPUT_TIME_AND_POSITIONS
@@ -213,7 +219,11 @@ namespace RVO
             // updateVisualization();
 #endif
             setPreferredVelocities();
-            Simulator.Instance.doStep();
+#if USED_GRID_RUNTIME
+            GridRuntime.doStep(Simulator.Instance);
+#else
+            KDRunntime.doStep(Simulator.Instance);
+#endif
         }
 
         private void OnDrawGizmos()
@@ -256,6 +266,8 @@ namespace RVO
 
         private void OnDestroy()
         {
+            GridRuntime.Clear();
+            KDRunntime.Clear();
             Simulator.Instance.Clear();
             Simulator.Instance.Dispose();
         }
