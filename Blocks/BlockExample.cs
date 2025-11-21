@@ -60,6 +60,8 @@ namespace RVO
         public Random random;
 
         private List<int> obstacles = new List<int>(36);
+        private float radius_ = 30.0f;
+        private float ObsRadius = 200;
 
         void Start()
         {
@@ -74,72 +76,57 @@ namespace RVO
             Simulator.Instance.setTimeStep(0.25f);
 
             /*
+             * Add (polygonal) obstacles, specifying their vertices in
+             * counterclockwise order.
+             */
+            // radius_ = 2;
+            // ObsRadius = 15;
+            // obstacles.Add(Simulator.Instance.addObstacleCube(new float2(-25, 25), ObsRadius));
+            // obstacles.Add(Simulator.Instance.addObstacleCube(new float2(25, 25), ObsRadius));
+            // obstacles.Add(Simulator.Instance.addObstacleCube(new float2(25, -25), ObsRadius));
+            // obstacles.Add(Simulator.Instance.addObstacleCube(new float2(-25, -25), ObsRadius));
+            /**
+            2 _ 1
+            |   |
+            3 _ 0
+            */
+            radius_ = 30.0f;
+            ObsRadius = 200;
+            obstacles.Add(Simulator.Instance.addObstacleCircle(new float2(0, 0), ObsRadius));
+
+            /*
              * Specify the default parameters for agents that are subsequently
              * added.
              */
-            Simulator.Instance.setAgentDefaults(15.0f, 5, 5.0f, 5.0f, 2.0f, 1f, new float2(0.0f, 0.0f));
+            Simulator.Instance.setAgentDefaults(radius_, 10, 5.0f, 5.0f);
 
             /*
              * Add agents, specifying their start position, and store their
              * goals on the opposite side of the environment.
              */
+            float offset = ObsRadius * 2;
             for (int i = 0; i < 7; ++i)
             {
                 for (int j = 0; j < 7; ++j)
                 {
-                    Simulator.Instance.addAgent(new float2(55.0f + i * 10.0f, 55.0f + j * 10.0f));
-                    goals.Add(new float2(-75.0f, -75.0f));
+                    Simulator.Instance.addAgent(new float2(offset + radius_ + i * 10.0f, radius_ + j * 10.0f));
+                    goals.Add(new float2());
 
-                    Simulator.Instance.addAgent(new float2(-55.0f - i * 10.0f, 55.0f + j * 10.0f));
-                    goals.Add(new float2(75.0f, -75.0f));
+                    Simulator.Instance.addAgent(new float2(offset + -radius_ - i * 10.0f, radius_ + j * 10.0f));
+                    goals.Add(new float2());
 
-                    Simulator.Instance.addAgent(new float2(55.0f + i * 10.0f, -55.0f - j * 10.0f));
-                    goals.Add(new float2(-75.0f, 75.0f));
+                    Simulator.Instance.addAgent(new float2(offset + radius_ + i * 10.0f, -radius_ - j * 10.0f));
+                    goals.Add(new float2());
 
-                    Simulator.Instance.addAgent(new float2(-55.0f - i * 10.0f, -55.0f - j * 10.0f));
-                    goals.Add(new float2(75.0f, 75.0f));
+                    Simulator.Instance.addAgent(new float2(offset + -radius_ - i * 10.0f, -radius_ - j * 10.0f));
+                    goals.Add(new float2());
                 }
             }
 
-            /*
-             * Add (polygonal) obstacles, specifying their vertices in
-             * counterclockwise order.
-             */
-            IList<float2> obstacle1 = new List<float2>
-            {
-                new float2(-10.0f, 40.0f),
-                new float2(-40.0f, 40.0f),
-                new float2(-40.0f, 10.0f),
-                new float2(-10.0f, 10.0f)
-            };
-            obstacles.Add(Simulator.Instance.addObstacle(obstacle1));
 
-            IList<float2> obstacle2 = new List<float2>
-            {
-                new float2(10.0f, 40.0f),
-                new float2(10.0f, 10.0f),
-                new float2(40.0f, 10.0f),
-                new float2(40.0f, 40.0f)
-            };
-            obstacles.Add(Simulator.Instance.addObstacle(obstacle2));
 
-            IList<float2> obstacle3 = new List<float2>
-            {
-                new float2(10.0f, -40.0f),
-                new float2(40.0f, -40.0f),
-                new float2(40.0f, -10.0f),
-                new float2(10.0f, -10.0f)
-            };
-            obstacles.Add(Simulator.Instance.addObstacle(obstacle3));
-
-            IList<float2> obstacle4 = new List<float2>
-            {
-                new float2(-10.0f, -40.0f),
-                new float2(-10.0f, -10.0f),
-                new float2(-40.0f, -10.0f),
-                new float2(-40.0f, -40.0f)
-            };
-            obstacles.Add(Simulator.Instance.addObstacle(obstacle4));
+            // Simulator.Instance.addAgent(new float2(0.0f, 0.0f), ObsRadius, true, true);
+            // goals.Add(new float2());
 
             /*
              * Process the obstacles so that they are accounted for in the
@@ -186,11 +173,11 @@ namespace RVO
                 Simulator.Instance.setAgentPrefVelocity(i, goalVector);
 
                 /* Perturb a little to avoid deadlocks due to perfect symmetry. */
-                float angle = (float)random.NextDouble() * 2.0f * (float)Math.PI;
-                float dist = (float)random.NextDouble() * 0.0001f;
-
-                Simulator.Instance.setAgentPrefVelocity(i, Simulator.Instance.getAgentPrefVelocity(i) +
-                    dist * new float2((float)Math.Cos(angle), (float)Math.Sin(angle)));
+                // float angle = (float)random.NextDouble() * 2.0f * (float)Math.PI;
+                // float dist = (float)random.NextDouble() * 0.0001f;
+                // Simulator.Instance.setAgentPrefVelocity(i, Simulator.Instance.getAgentPrefVelocity(i));
+                // Simulator.Instance.setAgentPrefVelocity(i, Simulator.Instance.getAgentPrefVelocity(i) +
+                //     dist * new float2((float)Math.Cos(angle), (float)Math.Sin(angle)));
             }
         }
 
@@ -258,7 +245,10 @@ namespace RVO
 
             for (int i = 0; i < simulator.getNumAgents(); ++i)
             {
-                Gizmos.DrawSphere((Vector2)simulator.getAgentPosition(i), 2);
+                if (simulator.getAgentFrozen(i))
+                    Gizmos.DrawWireSphere((Vector2)simulator.getAgentPosition(i), simulator.getAgentRadius(i));
+                else
+                    Gizmos.DrawSphere((Vector2)simulator.getAgentPosition(i), simulator.getAgentRadius(i));
             }
         }
 

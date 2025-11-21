@@ -65,7 +65,7 @@ namespace RVO
              * Specify the default parameters for agents that are subsequently
              * added.
              */
-            Simulator.Instance.setAgentDefaults(15.0f, 10, 10.0f, 10.0f, 1.5f, 2.0f, new float2(0.0f, 0.0f));
+            Simulator.Instance.setAgentDefaults( 1.5f ,10, 10.0f, 10.0f);
 
             /*
              * Add agents, specifying their start position, and store their

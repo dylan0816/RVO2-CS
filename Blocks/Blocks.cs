@@ -76,7 +76,7 @@ namespace RVO
              * Specify the default parameters for agents that are subsequently
              * added.
              */
-            Simulator.Instance.setAgentDefaults(15.0f, 10, 5.0f, 5.0f, 2.0f, 2.0f, new float2(0.0f, 0.0f));
+            Simulator.Instance.setAgentDefaults(2.0f ,10, 5.0f, 5.0f);
 
             /*
              * Add agents, specifying their start position, and store their
@@ -104,41 +104,10 @@ namespace RVO
              * Add (polygonal) obstacles, specifying their vertices in
              * counterclockwise order.
              */
-            IList<float2> obstacle1 = new List<float2>
-            {
-                new float2(-10.0f, 40.0f),
-                new float2(-40.0f, 40.0f),
-                new float2(-40.0f, 10.0f),
-                new float2(-10.0f, 10.0f)
-            };
-            Simulator.Instance.addObstacle(obstacle1);
-
-            IList<float2> obstacle2 = new List<float2>
-            {
-                new float2(10.0f, 40.0f),
-                new float2(10.0f, 10.0f),
-                new float2(40.0f, 10.0f),
-                new float2(40.0f, 40.0f)
-            };
-            Simulator.Instance.addObstacle(obstacle2);
-
-            IList<float2> obstacle3 = new List<float2>
-            {
-                new float2(10.0f, -40.0f),
-                new float2(40.0f, -40.0f),
-                new float2(40.0f, -10.0f),
-                new float2(10.0f, -10.0f)
-            };
-            Simulator.Instance.addObstacle(obstacle3);
-
-            IList<float2> obstacle4 = new List<float2>
-            {
-                new float2(-10.0f, -40.0f),
-                new float2(-10.0f, -10.0f),
-                new float2(-40.0f, -10.0f),
-                new float2(-40.0f, -40.0f)
-            };
-            Simulator.Instance.addObstacle(obstacle4);
+            Simulator.Instance.addObstacleCube(new float2(-25, 25), 15);
+            Simulator.Instance.addObstacleCube(new float2(25, 25), 15);
+            Simulator.Instance.addObstacleCube(new float2(25, -25), 15);
+            Simulator.Instance.addObstacleCube(new float2(-25, -25), 15);
 
             /*
              * Process the obstacles so that they are accounted for in the

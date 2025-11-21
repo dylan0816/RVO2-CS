@@ -73,7 +73,7 @@ namespace RVO
          * <param name="position">The two-dimensional starting position of this
          * agent.</param>
          */
-        public int addAgent(float2 position, bool valid = true, bool frozen = false)
+        public int addAgent(float2 position, float radius = 0, bool valid = true, bool frozen = false)
         {
             Agent agent = new Agent();
             agent.id_ = agents_.Length;
@@ -82,7 +82,7 @@ namespace RVO
             agent.maxNeighbors_ = defaultAgent_.maxNeighbors_;
             agent.maxSpeed_ = defaultAgent_.maxSpeed_;
             agent.neighborDist_ = defaultAgent_.neighborDist_;
-            agent.radius_ = defaultAgent_.radius_;
+            agent.radius_ = radius <= 0 ? defaultAgent_.radius_ : radius;
             agent.timeHorizon_ = defaultAgent_.timeHorizon_;
             agent.timeHorizonObst_ = defaultAgent_.timeHorizonObst_;
             agent.velocity_ = defaultAgent_.velocity_;
@@ -146,8 +146,12 @@ namespace RVO
         }
 
         /**
-         * <summary>Adds a new obstacle to the simulation.</summary>
-         *
+         * <summary>
+         * Adds a new obstacle to the simulation.
+         * 2 _ 1
+         * |   |
+         * 3 _ 0
+         * </summary>
          * <returns>The number of the first vertex of the obstacle, or -1 when
          * the number of vertices is less than two.</returns>
          *
@@ -158,16 +162,16 @@ namespace RVO
          * the environment, the vertices should be listed in clockwise order.
          * </remarks>
          */
-        public int addObstacle(IList<float2> vertices)
+        public int addObstacle(NativeArray<float2> vertices)
         {
-            if (vertices.Count < 2)
+            if (vertices.Length < 2)
             {
                 return -1;
             }
 
             int obstacleNo = obstacles_.Length;
 
-            for (int i = 0; i < vertices.Count; ++i)
+            for (int i = 0; i < vertices.Length; ++i)
             {
                 int vertexNo = obstacleNo + i;
                 Obstacle obstacle = new Obstacle();
@@ -183,7 +187,7 @@ namespace RVO
                     obstacles_[obstacle.previous_] = previous;
                 }
 
-                if (i == vertices.Count - 1)
+                if (i == vertices.Length - 1)
                 {
                     obstacle.next_ = obstacleNo;
 
@@ -192,21 +196,60 @@ namespace RVO
                     obstacles_[obstacleNo] = next_;
                 }
 
-                obstacle.direction_ = RVOMath.normalize(vertices[(i == vertices.Count - 1 ? 0 : i + 1)] - vertices[i]);
+                obstacle.direction_ = RVOMath.normalize(vertices[(i == vertices.Length - 1 ? 0 : i + 1)] - vertices[i]);
 
-                if (vertices.Count == 2)
+                if (vertices.Length == 2)
                 {
                     obstacle.convex_ = true;
                 }
                 else
                 {
-                    obstacle.convex_ = (RVOMath.leftOf(vertices[(i == 0 ? vertices.Count - 1 : i - 1)], vertices[i], vertices[(i == vertices.Count - 1 ? 0 : i + 1)]) >= 0.0f);
+                    obstacle.convex_ = (RVOMath.leftOf(vertices[(i == 0 ? vertices.Length - 1 : i - 1)], vertices[i], vertices[(i == vertices.Length - 1 ? 0 : i + 1)]) >= 0.0f);
                 }
 
                 obstacles_.Add(obstacle);
             }
 
             return obstacleNo;
+        }
+
+        public int addObstacleCircle(float2 center, float radius)
+        {
+            NativeArray<float2> vertices = new NativeArray<float2>(16, Allocator.Temp);
+            float r1 = radius * 0.71f;
+            float r2 = radius * 0.38f;
+            float r3 = radius * 0.92f;
+            vertices[0] = new float2(center.x + 0, center.y + -radius); // bottom
+            vertices[1] = new float2(center.x + r2, center.y + -r3);
+            vertices[2] = new float2(center.x + r1, center.y + -r1); // half
+            vertices[3] = new float2(center.x + r3, center.y + -r2);
+            vertices[4] = new float2(center.x + radius, center.y + 0); // right
+            vertices[5] = new float2(center.x + r3, center.y + r2);
+            vertices[6] = new float2(center.x + r1, center.y + r1); // half
+            vertices[7] = new float2(center.x + r2, center.y + r3);
+            vertices[8] = new float2(center.x + 0, center.y + radius); // top
+            vertices[9] = new float2(center.x - r2, center.y + r3);
+            vertices[10] = new float2(center.x - r1, center.y + r1);
+            vertices[11] = new float2(center.x - r3, center.y + r2);
+            vertices[12] = new float2(center.x - radius, center.y + 0); // left
+            vertices[13] = new float2(center.x - r3, center.y - r2);
+            vertices[14] = new float2(center.x - r1, center.y - r1);
+            vertices[15] = new float2(center.x - r2, center.y - r3);
+            int obstacleId = addObstacle(vertices);
+            vertices.Dispose();
+            return obstacleId;
+        }
+
+        public int addObstacleCube(float2 center, float size)
+        {
+            NativeArray<float2> vertices = new NativeArray<float2>(4, Allocator.Temp);
+            vertices[0] = new float2(center.x + size, center.y + -size);
+            vertices[1] = new float2(center.x + size, center.y + size);
+            vertices[2] = new float2(center.x - size, center.y + size);
+            vertices[3] = new float2(center.x - size, center.y + -size);
+            int obstacleId = addObstacle(vertices);
+            vertices.Dispose();
+            return obstacleId;
         }
 
         /**
@@ -345,6 +388,19 @@ namespace RVO
         public float2 getAgentVelocity(int agentNo)
         {
             return agents_[agentNo].velocity_;
+        }
+
+        /**
+         * <summary>Returns whether a specified agent is frozen.</summary>
+         *
+         * <returns>True if the agent is frozen, false otherwise.</returns>
+         *
+         * <param name="agentNo">The number of the agent whose frozen status is
+         * to be retrieved.</param>
+         */
+        public bool getAgentFrozen(int agentNo)
+        {
+            return agents_[agentNo].frozen_;
         }
 
         /**
@@ -508,7 +564,7 @@ namespace RVO
          * <param name="velocity">The default initial two-dimensional linear
          * velocity of a new agent.</param>
          */
-        public void setAgentDefaults(float neighborDist, int maxNeighbors, float timeHorizon, float timeHorizonObst, float radius, float maxSpeed, float2 velocity, bool valid = true, bool frozen = false)
+        public void setAgentDefaults(float radius, int maxNeighbors, float timeHorizon, float timeHorizonObst, float neighborDist, float maxSpeed, float2 velocity, bool valid = true, bool frozen = false)
         {
             defaultAgent_ = new Agent();
             defaultAgent_.id_ = -1;
@@ -523,6 +579,9 @@ namespace RVO
             defaultAgent_.valid_ = valid;
             defaultAgent_.frozen_ = frozen;
         }
+
+        public void setAgentDefaults(float radius, int maxNeighbors, float timeHorizon, float timeHorizonObst)
+            => setAgentDefaults(radius, maxNeighbors, timeHorizon, timeHorizonObst, radius * 7, radius, float2.zero);
 
         /**
          * <summary>Sets the maximum neighbor count of a specified agent.
